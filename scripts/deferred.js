@@ -26,7 +26,7 @@ window.debugLog = function debugLog(var_args) {
   }
 };
 
-PROJECTKORERO-SYSTEM.Deferred = PROJECTKORERO-SYSTEM.Deferred || (function () {
+KORERO.Deferred = KORERO.Deferred || (function () {
     'use strict';
 
     /**

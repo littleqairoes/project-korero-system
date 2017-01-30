@@ -1,10 +1,10 @@
-PROJECTKORERO-SYSTEM.Elements = (function () {
+KORERO.Elements = (function () {
   'use strict';
 
   function init() {
-    PROJECTKORERO-SYSTEM.Elements.Template = document.getElementById('nice-app');
-    PROJECTKORERO-SYSTEM.Elements.Loader = document.getElementById('showbox');
-    
+    KORERO.Elements.Template = document.getElementById('core-app');
+    KORERO.Elements.Loader = document.getElementById('showbox');
+
   }
 
   return {

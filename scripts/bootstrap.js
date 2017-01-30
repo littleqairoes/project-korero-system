@@ -24,7 +24,7 @@
 
   function logRejectedPromises() {
     unhandledRejections.forEach(function (reason) {
-      PROJECTKORERO-SYSTEM.Analytics.trackError('UnhandledPromiseRejection', reason);
+      KORERO.Analytics.trackError('UnhandledPromiseRejection', reason);
     });
 
     unhandledRejections = [];
@@ -90,8 +90,8 @@
       parent.insertBefore(polyfillScript, swScript);
     }
 
-    if (!(PROJECTKORERO-SYSTEM.Util.getChromeVersion() &&
-      PROJECTKORERO-SYSTEM.Util.getChromeVersion() >= 46 || PROJECTKORERO-SYSTEM.Util.getFirefoxVersion() && PROJECTKORERO-SYSTEM.Util.getFirefoxVersion() >= 40)) {
+    if (!(KORERO.Util.getChromeVersion() &&
+      KORERO.Util.getChromeVersion() >= 46 || KORERO.Util.getFirefoxVersion() && KORERO.Util.getFirefoxVersion() >= 40)) {
       var parent = document.querySelector('body');
       var swScript = document.querySelector('#sw-registration');
       var polyfillScript = document.createElement('script');
@@ -106,21 +106,21 @@
   }
 
   window.addEventListener('offline', function () {
-    if (PROJECTKORERO-SYSTEM.Elements && PROJECTKORERO-SYSTEM.Elements.Template.$.toast) {
-      PROJECTKORERO-SYSTEM.Elements.Template.$.toast.show(
+    if (KORERO.Elements && KORERO.Elements.Template.$.toast) {
+      KORERO.Elements.Template.$.toast.show(
         'You can still work offline.');
     }
   });
 
   // See https://developers.google.com/web/fundamentals/engage-and-retain/app-install-banners/advanced
   window.addEventListener('beforeinstallprompt', function (event) {
-    PROJECTKORERO-SYSTEM.Analytics.trackEvent('installprompt', 'fired');
+    KORERO.Analytics.trackEvent('installprompt', 'fired');
 
     event.userChoice.then(function (choiceResult) {
       // choiceResult.outcome will be 'accepted' or 'dismissed'.
       // choiceResult.platform will be 'web' or 'android' if the prompt was
       // accepted, or '' if the prompt was dismissed.
-      PROJECTKORERO-SYSTEM.Analytics.trackEvent('installprompt', choiceResult.outcome,
+      KORERO.Analytics.trackEvent('installprompt', choiceResult.outcome,
         choiceResult.platform);
     });
   });
@@ -131,7 +131,7 @@
     // async. It's a noop and its callback gets invoked right away. Therefore,
     // this shouldn't slow anything down.
     lazyLoadWCPolyfillsIfNecessary(function () {
-      PROJECTKORERO-SYSTEM.Elements.init();
+      KORERO.Elements.init();
     });
   }
 

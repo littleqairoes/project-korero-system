@@ -7,6 +7,7 @@
 
 <link rel="import" href="../web-components/project-korero-system-header/project-korero-system-header.html">
 <link rel="import" href="../web-components/project-korero-system-drawer/project-korero-system-drawer.html">
+<link rel="import" href="../web-components/project-korero-system-toast/project-korero-system-toast.html">
 
 <!--
 `<project-korero-system-app-shell>` is the main core element called in the index.html that
@@ -37,16 +38,16 @@ Wham! It's all awesome now!
 
     <qairoe-app-layout scroll-progress="{{scrollProgress}}">
 
-      <project-korero-system-header 
-        main-header 
+      <project-korero-system-header
+        main-header
         scroll-progress="{{scrollProgress}}"
         route="[[currentRoute]]"
         user="{{user}}"></project-korero-system-header>
-      <project-korero-system-drawer 
-        main-drawer 
-        navigation-list="[[navigationList]]" 
+      <project-korero-system-drawer
+        main-drawer
+        navigation-list="[[navigationList]]"
         scroll-progress="{{scrollProgress}}"
-        route="[[currentRoute]]" 
+        route="[[currentRoute]]"
         user="{{user}}"></project-korero-system-drawer>
 
       <qairoe-app-router
@@ -65,6 +66,8 @@ Wham! It's all awesome now!
 
       </qairoe-app-router>
     </qairoe-app-layout>
+
+    <project-korero-system-toast id="toast"></project-korero-system-toast>
 
   </template>
   <script>
@@ -115,44 +118,44 @@ Wham! It's all awesome now!
       ready: function() {
 
         Polymer.RenderStatus.afterNextRender(this, function () {
-          if (PROJECTKORERO-SYSTEM && PROJECTKORERO-SYSTEM.ServiceWorkerRegistration) {
-            PROJECTKORERO-SYSTEM.ServiceWorkerRegistration.register();
-          }     
-          this.fire('project-nice-app-shell-ready');         
+          if (KORERO && KORERO.ServiceWorkerRegistration) {
+            KORERO.ServiceWorkerRegistration.register();
+          }
+          this.fire('project-nice-app-shell-ready');
         }.bind(this));
       },
 
       viewLoaded: function() {
         console.log('loaded')
-        if (PROJECTKORERO-SYSTEM && PROJECTKORERO-SYSTEM.Elements && PROJECTKORERO-SYSTEM.Elements.Loader) {
-          PROJECTKORERO-SYSTEM.Elements.Loader.style.cssText = "display: none";
-          
+        if (KORERO && KORERO.Elements && KORERO.Elements.Loader) {
+          KORERO.Elements.Loader.style.cssText = "display: none";
+
         }
 
-        if (PROJECTKORERO-SYSTEM.LoaderTimerShort) {
-          clearTimeout(PROJECTKORERO-SYSTEM.LoaderTimerShort);
-          PROJECTKORERO-SYSTEM.LoaderTimerShort = null;
+        if (KORERO.LoaderTimerShort) {
+          clearTimeout(KORERO.LoaderTimerShort);
+          KORERO.LoaderTimerShort = null;
         }
 
-        if (PROJECTKORERO-SYSTEM.LoaderTimerShorter) {
-          clearTimeout(PROJECTKORERO-SYSTEM.LoaderTimerShorter);
-          PROJECTKORERO-SYSTEM.LoaderTimerShorter = null;
+        if (KORERO.LoaderTimerShorter) {
+          clearTimeout(KORERO.LoaderTimerShorter);
+          KORERO.LoaderTimerShorter = null;
         }
 
-        if (PROJECTKORERO-SYSTEM.LoaderTimer) {
+        if (KORERO.LoaderTimer) {
           console.log('clearing timer')
-          clearTimeout(PROJECTKORERO-SYSTEM.LoaderTimer);
-          PROJECTKORERO-SYSTEM.LoaderTimer = null;
+          clearTimeout(KORERO.LoaderTimer);
+          KORERO.LoaderTimer = null;
         }
 
-        if (PROJECTKORERO-SYSTEM.LoaderTimerLong) {
-          clearTimeout(PROJECTKORERO-SYSTEM.LoaderTimerLong);
-          PROJECTKORERO-SYSTEM.LoaderTimerLong = null;
+        if (KORERO.LoaderTimerLong) {
+          clearTimeout(KORERO.LoaderTimerLong);
+          KORERO.LoaderTimerLong = null;
         }
 
-        if (PROJECTKORERO-SYSTEM.LoaderMessagesInterval) {
-          clearInterval(PROJECTKORERO-SYSTEM.LoaderMessagesInterval);
-          PROJECTKORERO-SYSTEM.LoaderMessagesInterval = null
+        if (KORERO.LoaderMessagesInterval) {
+          clearInterval(KORERO.LoaderMessagesInterval);
+          KORERO.LoaderMessagesInterval = null
         }
 
         if (window.slowNetwork) {

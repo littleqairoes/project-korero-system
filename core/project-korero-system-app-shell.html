@@ -1,0 +1,169 @@
+<!-- Polymer Global dependencies -->
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/qairoe-app-layout/qairoe-app-layout.html">
+<link rel="import" href="../bower_components/qairoe-app-router/qairoe-app-router.html">
+
+<!-- Custom Element dependencies -->
+
+<link rel="import" href="../web-components/project-korero-system-header/project-korero-system-header.html">
+<link rel="import" href="../web-components/project-korero-system-drawer/project-korero-system-drawer.html">
+
+<!--
+`<project-korero-system-app-shell>` is the main core element called in the index.html that
+renders the pages.
+
+Currently we have hard-coded the pages, they are lazily loaded inside the dom-module
+
+In typical use, just slap some `<project-korero-system-app-shell>` at the top of your body:
+
+    <body>
+      <project-korero-system-app-shell></project-korero-system-app-shell>
+
+Wham! It's all awesome now!
+-->
+<dom-module id="project-korero-system-app-shell">
+  <!-- Lazy loaded dependencies -->
+  <!-- LAZY LOADER STARTS HERE -->
+  <link rel="lazy-import" href="/pages/home-page/home-page.html" group="home-page">
+  <link rel="lazy-import" href="/pages/first-page/first-page.html" group="first-page">
+  <link rel="lazy-import" href="/pages/second-page/second-page.html" group="second-page">
+  <link rel="lazy-import" href="/pages/not-authorized-page/not-authorized-page.html" group="not-authorized-page">
+  <link rel="lazy-import" href="/pages/not-found-page/not-found-page.html" group="not-found-page">
+  <!-- LAZY LOADER ENDS HERE -->
+
+  <template>
+    <style is="custom-style">
+    </style>
+
+    <qairoe-app-layout scroll-progress="{{scrollProgress}}">
+
+      <project-korero-system-header 
+        main-header 
+        scroll-progress="{{scrollProgress}}"
+        route="[[currentRoute]]"
+        user="{{user}}"></project-korero-system-header>
+      <project-korero-system-drawer 
+        main-drawer 
+        navigation-list="[[navigationList]]" 
+        scroll-progress="{{scrollProgress}}"
+        route="[[currentRoute]]" 
+        user="{{user}}"></project-korero-system-drawer>
+
+      <qairoe-app-router
+          main-content
+          current-route="{{currentRoute}}"
+          parent-tag-name="project-korero-system-app-shell"
+          on-view-loaded="viewLoaded">
+
+        <!-- ROUTER STARTS HERE -->
+        <home-page route="/"></home-page>
+        <first-page route="/first"></first-page>
+        <second-page route="/second"></second-page>
+        <not-authorized-page route="not-authorized"></not-authorized-page>
+        <not-found-page route="not-found"></not-found-page>
+        <!-- ROUTER ENDS HERE -->
+
+      </qairoe-app-router>
+    </qairoe-app-layout>
+
+  </template>
+  <script>
+    /*global Polymer*/
+
+    Polymer({
+      is: 'project-korero-system-app-shell',
+
+      properties: {
+        navigationList: {
+          type: Array,
+          readOnly: true,
+          value: function() {
+            return [
+              {
+                label: 'Home',
+                url: '/'
+              },
+              {
+                label: 'First Page',
+                url: '/first'
+              },
+              {
+                label: 'Second Page',
+                url: '/second'
+              }
+            ];
+          }
+        },
+        scrollProgress: {
+          type: Number
+        },
+        user: {
+          type: Object
+        },
+        route: {
+          type: String
+        },
+        app: {
+          type: Object,
+          notify: true,
+          value: function () {
+            return {};
+          }
+        },
+      },
+
+      ready: function() {
+
+        Polymer.RenderStatus.afterNextRender(this, function () {
+          if (PROJECTKORERO-SYSTEM && PROJECTKORERO-SYSTEM.ServiceWorkerRegistration) {
+            PROJECTKORERO-SYSTEM.ServiceWorkerRegistration.register();
+          }     
+          this.fire('project-nice-app-shell-ready');         
+        }.bind(this));
+      },
+
+      viewLoaded: function() {
+        console.log('loaded')
+        if (PROJECTKORERO-SYSTEM && PROJECTKORERO-SYSTEM.Elements && PROJECTKORERO-SYSTEM.Elements.Loader) {
+          PROJECTKORERO-SYSTEM.Elements.Loader.style.cssText = "display: none";
+          
+        }
+
+        if (PROJECTKORERO-SYSTEM.LoaderTimerShort) {
+          clearTimeout(PROJECTKORERO-SYSTEM.LoaderTimerShort);
+          PROJECTKORERO-SYSTEM.LoaderTimerShort = null;
+        }
+
+        if (PROJECTKORERO-SYSTEM.LoaderTimerShorter) {
+          clearTimeout(PROJECTKORERO-SYSTEM.LoaderTimerShorter);
+          PROJECTKORERO-SYSTEM.LoaderTimerShorter = null;
+        }
+
+        if (PROJECTKORERO-SYSTEM.LoaderTimer) {
+          console.log('clearing timer')
+          clearTimeout(PROJECTKORERO-SYSTEM.LoaderTimer);
+          PROJECTKORERO-SYSTEM.LoaderTimer = null;
+        }
+
+        if (PROJECTKORERO-SYSTEM.LoaderTimerLong) {
+          clearTimeout(PROJECTKORERO-SYSTEM.LoaderTimerLong);
+          PROJECTKORERO-SYSTEM.LoaderTimerLong = null;
+        }
+
+        if (PROJECTKORERO-SYSTEM.LoaderMessagesInterval) {
+          clearInterval(PROJECTKORERO-SYSTEM.LoaderMessagesInterval);
+          PROJECTKORERO-SYSTEM.LoaderMessagesInterval = null
+        }
+
+        if (window.slowNetwork) {
+          try {
+            Raven.captureMessage('Slow loading done', {time: (((new Date()).getTime() - window.slowNetwork.getTime())/ 1000)});
+            window.slowNetwork = null;
+          } catch(e) {
+            Raven.captureError(e);
+          }
+        }
+      }
+    });
+  </script>
+</dom-module>

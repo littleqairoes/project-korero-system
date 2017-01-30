@@ -1,0 +1,106 @@
+<!-- Polymer dependencies -->
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<link rel="import" href="../../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../web-components/project-korero-system-icons/project-korero-system-icons.html">
+<link rel="import" href="../../web-components/project-korero-system-navigation/project-korero-system-navigation.html">
+
+<!-- Style dependency -->
+<link rel="import" href="project-korero-system-header-style.html">
+
+<dom-module id="project-korero-system-header">
+  <template>
+    <style is="custom-style" include="project-korero-system-header-style">
+      :host {
+        display: block;
+      }
+    </style>
+
+    <!-- then the app-header -->
+    <app-header
+        fixed$="[[fixed]]" 
+        sticky$="[[sticky]]" 
+        condenses$="[[condenses]]"
+        disabled$="[[disabled]]" 
+        effects="[[effects]]"
+        effects-config="[[effectsConfig]]"
+        reveals$="[[reveals]]"
+        scroll-target="[[scrollTarget]]"
+        shadow$="[[shadow]]"
+        threshold="[[treshold]]"
+        threshold-triggered="[[tresholdTriggered]]">
+
+      <app-toolbar>
+        
+        <!-- Drawer button -->
+        <paper-icon-button
+          icon="default:menu"
+          class$="hide-on-tablet-landscape-up drawer-toggle-button [[[[_scrollProgressChangedForDrawerToggleButton(scrollProgress)]]]]"
+          on-tap="_toggleDrawer">
+        </paper-icon-button>
+
+        <div main-title>Project Korero System</div>
+
+        <!-- Navigation -->
+        <project-korero-system-navigation navigation-list="[[navigationList]]" user="{{user}}" route="[[route]]"></project-korero-system-navigation>
+        
+      </app-toolbar>
+    </app-header>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'project-korero-system-header',
+
+      properties: {
+        navigationList: {
+          type: Array,
+          value: function() { return []; }
+        },
+        user: {
+          type: Object,
+          notify: true
+        },
+        route: {
+          type: String
+        },
+        fixed: {
+          type: Boolean,
+          value: false
+        },
+        shadow: {
+          type: Boolean,
+          value: false
+        },
+        scrollProgress: {
+          type: Number,
+          observer: '_scrollProgressChanged'
+        },
+        scrollProgressThreshold: {
+          type: Number,
+          value: 0
+        }
+      },
+
+      _toggleDrawer: function() {
+        this.fire('toggle-drawer');
+      },
+
+      _scrollProgressChanged: function(scrollProgress) {        
+        var appHeader = this.$$('app-header');
+        // var fadeBackgroundEffect = appHeader.createEffect('fade-background');
+        var isCondensed = scrollProgress < this.scrollProgressThreshold;
+        this.shadow = !isCondensed;
+        // fadeBackgroundEffect.run(isCondensed ? 1 : 0);
+      },
+      
+      _scrollProgressChangedForDrawerToggleButton: function(scrollProgress) {
+        if (scrollProgress > 0) {
+          return 'drawer-toggle-button-scrolled';
+        }
+      },
+    });
+  </script>
+</dom-module>

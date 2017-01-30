@@ -1,0 +1,18 @@
+//
+
+@import 'styles/variables';
+
+.project-korero-system-navigation-header {
+  .project-korero-system-navigation-item {
+    color: $gray-dark;
+    text-decoration: none;
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+}
+
+.project-korero-system-navigation-item {
+  &.iron-selected {
+    font-weight: bold;
+  }
+}

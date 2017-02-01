@@ -31,8 +31,8 @@ Wham! It's all awesome now!
   <!-- Lazy loaded dependencies -->
   <!-- LAZY LOADER STARTS HERE -->
   <link rel="lazy-import" href="/pages/home-page/home-page.html" group="home-page">
-  <link rel="lazy-import" href="/pages/first-page/first-page.html" group="first-page">
-  <link rel="lazy-import" href="/pages/second-page/second-page.html" group="second-page">
+  <link rel="lazy-import" href="/pages/sign-up-page/sign-up-page.html" group="sign-up-page">
+  <link rel="lazy-import" href="/pages/admin-page/admin-page.html" group="admin-page">
   <link rel="lazy-import" href="/pages/not-authorized-page/not-authorized-page.html" group="not-authorized-page">
   <link rel="lazy-import" href="/pages/not-found-page/not-found-page.html" group="not-found-page">
   <!-- LAZY LOADER ENDS HERE -->
@@ -63,8 +63,8 @@ Wham! It's all awesome now!
 
         <!-- ROUTER STARTS HERE -->
         <home-page route="/"></home-page>
-        <first-page route="/first"></first-page>
-        <second-page route="/second"></second-page>
+        <sign-up-page route="/sign-up"></sign-up-page>
+        <admin-page route="/admin"></admin-page>
         <not-authorized-page route="not-authorized"></not-authorized-page>
         <not-found-page route="not-found"></not-found-page>
         <!-- ROUTER ENDS HERE -->
@@ -87,18 +87,14 @@ Wham! It's all awesome now!
           readOnly: true,
           value: function() {
             return [
-              {
-                label: 'Home',
-                url: '/'
-              },
-              {
-                label: 'First Page',
-                url: '/first'
-              },
-              {
-                label: 'Second Page',
-                url: '/second'
-              }
+              // {
+              //   label: 'Home',
+              //   url: '/'
+              // },
+              // {
+              //   label: 'admin Page',
+              //   url: '/admin'
+              // }
             ];
           }
         },

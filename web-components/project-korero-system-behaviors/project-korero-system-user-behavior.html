@@ -1,0 +1,257 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="project-korero-system-utils-behavior.html">
+
+<script>
+  (function(){
+    'use strict';
+    /** @polymerBehavior KORERO.UserBehavior */
+    KORERO.UserBehaviorImpl = {
+
+      properties: {
+        user: {
+          type: Object,
+          notify: true,
+          value: function() { return null; },
+        },
+        signedIn: {
+          type: Boolean,
+          notify: true,
+          value: false
+        },
+        roles: {
+          type: Object,
+          notify: true,
+          value: function() { return {}; }
+        },
+        owner: {
+          type: Object,
+          value: function() { return null; }
+        },
+        userPath: {
+          type: Object,
+          readOnly: true,
+          value: function() { return this._userPath; }
+        },
+        userGroup: {
+          type: String,
+          readOnly: true,
+          value: function() { return this._userGroup; }
+        },
+        profile: {
+          type: Object
+        }
+      },
+
+      _memberListener: null,
+
+      _pendingListener: null,
+
+      detached: function() {
+        if (this._memberListener && this.user) {
+          firebase.database().ref(this._userPath.options.members + '/' + this.user.uid).off('value', this._memberListener);
+          this._memberListener = null;
+        }
+
+        if (this._pendingListener && this.user) {
+          firebase.database().ref(this._userPath.options.pending + '/' + this.user.uid + '/value').off('value', this._pendingListener);
+          this._pendingListener = null;
+        }
+      },
+
+      observers: [
+        '_getRoles(user.uid)'
+      ],
+
+      get _userGroup() {
+        return 'userGroup';
+      },
+
+      get _userPath() {
+        var roles = this._version + '/' + this._userGroup + '/roles';
+        return {
+          profiles: this._version + '/' + this._userGroup + '/profiles',
+          groups: this._version + '/' + this._userGroup + '/groups',
+          roles: {
+            admin: roles + '/admin',
+            groups: roles + '/groups'
+          },
+        };
+      },
+
+      _getRoles: function(uid) {
+        // // console.log(uid);
+        // if (uid && firebase) {
+
+        //   //member
+        //   this._memberListener = firebase.database().ref(this._userPath.options.members + '/' + uid).on('value', (dataSnapshot) => {
+        //     var m = dataSnapshot.val();
+        //     var roles = {};
+        //     if (m) {
+        //       var a1 = m.admin;
+        //       var e1 = m.editor;
+        //       var s1 = m.staff;
+        //       var m1 = m.member;
+
+
+        //       roles.admin = a1;
+        //       roles.editor = e1 || a1;
+        //       roles.staff = s1 || e1 || a1;
+        //       roles.member = m1 || s1 || e1 || a1;
+        //     }
+
+        //     this.roles = roles;
+
+        //   }, this._catchError.bind(this));
+
+        //   //pending
+        //   this._pendingListener = firebase.database().ref(this._userPath.options.pending + '/' + uid + '/value').on('value', (dataSnapshot) => {
+        //     var roles = {}
+        //     if (dataSnapshot.val()) {
+        //       roles = {};
+        //       roles.pending = dataSnapshot.val();
+        //       this.roles = roles;
+        //     } else if (!this.roles.member) {
+        //       this.roles = roles;
+        //     }
+        //   }, this._catchError.bind(this));
+        // } else if (!firebase) {
+        //   console.error(new Error('Firebase has not been set'))
+        // }
+      },
+
+      _checkAuthRole: function(user, auth, roles, role, owner, flag) {
+
+        // if (auth) {
+        //   if (role) {
+        //     if (flag) {
+        //       return user && (roles[role] && (owner && owner.uid === user.uid));
+        //     }
+        //     return user && (roles[role] || (owner && owner.uid === user.uid));
+        //   }
+        //   return user;
+        // }
+        // return true;
+      },
+
+      // _checkPermission: function(role, owner, flag) {
+      //   return this._checkAuthRole(this.user, true, this.roles, role, owner, flag);
+      // },
+
+      // _checkPermissionWithoutOwner: function(role) {
+      //   return this._checkAuthRole(this.user, true, this.roles, role);
+      // },
+
+      // _checkPending: function(id) {
+      //   return this.user.uid === id && this._checkPermissionWithoutOwner('pending');
+      // },
+
+      // _checkNonMember: function(id) {
+      //   return this.user.uid === id && !(this._checkPermissionWithoutOwner('pending') || this._checkPermissionWithoutOwner('member'))
+      // },
+
+      // _checkOwner: function(owner, user) {
+      //   if (owner && user) {
+      //     return owner.uid === user.uid
+      //   }
+      // },
+
+      // _checkProfileMember: function(m) {
+      //   var a1 = m.admin;
+      //   var e1 = m.editor;
+      //   var s1 = m.staff;
+      //   var m1 = m.member;
+
+      //   return m1 || s1 || e1 || a1
+      // },
+
+      // _checkProfilePendingMember: function(m) {
+      //   return m.pending;
+      // },
+
+      _checkProfile: function(user, ref, profile) {
+        // if (!profile.val()) {
+        //   var obj = {
+        //     displayName: user.displayName,
+        //     email: user.email,
+        //     image: user.photoURL,
+        //   };
+
+        //   if (user.displayName) {
+        //     var array = user.displayName.trim().split(' ');
+        //     obj.lastName = array.pop();
+        //     obj.firstName = array.join(' ');
+        //   }
+
+        //   var updates = {};
+        //   updates[ref] = obj;
+        //   // updates[this.userPath.options.pending + '/' + user.uid] = {value: firebase.database.ServerValue.TIMESTAMP}
+
+        //   return firebase.database().ref().update(updates).then(function(){
+        //     // window.location.assign('/profile?edit=true');
+        //   });
+        // } else {
+        //   window.location.assign('/');
+        // }
+      },
+
+      _displayName: function(user) {
+        if (user) return user.displayName ? user.displayName : user.email;
+      },
+
+
+
+      _loginSuccess: function(result) {
+        var ref = this.userPath.profiles + '/' +  result.user.uid;
+        this._showMessage('Welcome ' + result.user.displayName + '!');
+
+        if (firebase) {
+          firebase.database().ref(ref).once('value', this._checkProfile.bind(this, result.user, ref));
+        } else {
+          throw new Error('No firebase app connected');
+        }
+      },
+
+      _logoutSuccess: function(result) {
+
+        this._showMessage('Goodbye!');
+        setTimeout(() => {
+          // window.location.href="/"
+        }, 1000)
+      },
+
+      login: function() {
+
+      },
+
+      signUp: function() {
+
+      },
+
+      loginAdmin: function(e) {
+        if (this.$.auth && this.$.auth.signInWithPopup) {
+          this.$.auth.provider = e.target.id || "google";
+
+          this.$.auth.signInWithPopup().then(this._loginSuccess.bind(this)).catch(this._catchError.bind(this));
+        } else {
+          this._catchError(new Error('no auth component found'));
+        }
+      },
+
+      logout: function() {
+        if (this.user) {
+          if (this.$.auth && this.$.auth.signOut) {
+            this.$.auth.signOut().then(this._logoutSuccess.bind(this)).catch(this._catchError.bind(this));
+          } else {
+            this._catchError(new Error('no auth component found'));
+          }
+        } else {
+          this._showMessage('You are already logged out.');
+        }
+      },
+    };
+    KORERO.UserBehavior = [
+      KORERO.UtilsBehavior,
+      KORERO.UserBehaviorImpl
+    ];
+  })();
+</script>

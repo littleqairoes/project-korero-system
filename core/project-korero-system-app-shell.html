@@ -41,6 +41,12 @@ Wham! It's all awesome now!
     <style is="custom-style">
     </style>
 
+    <firebase-app
+        auth-domain="[[config.authDomain]]"
+        database-url="[[config.databaseURL]]"
+        api-key="[[config.apiKey]]"
+        storage-bucket="[[config.storageBucket]]"></firebase-app>
+
     <qairoe-app-layout scroll-progress="{{scrollProgress}}">
 
       <project-korero-system-header
@@ -48,14 +54,15 @@ Wham! It's all awesome now!
         scroll-progress="{{scrollProgress}}"
         route="[[currentRoute]]"
         user="{{user}}"></project-korero-system-header>
-      <project-korero-system-drawer
+      <!--<project-korero-system-drawer
         main-drawer
         navigation-list="[[navigationList]]"
         scroll-progress="{{scrollProgress}}"
         route="[[currentRoute]]"
-        user="{{user}}"></project-korero-system-drawer>
+        user="{{user}}"></project-korero-system-drawer>-->
 
       <qairoe-app-router
+          id="router"
           main-content
           current-route="{{currentRoute}}"
           parent-tag-name="project-korero-system-app-shell"
@@ -76,7 +83,13 @@ Wham! It's all awesome now!
 
   </template>
   <script>
-    /*global Polymer*/
+    var config = {
+      apiKey: "AIzaSyCCV4ZDda20CiMANkOK1we4HTELlRFA-oc",
+      authDomain: "project-korero-system.firebaseapp.com",
+      databaseURL: "https://project-korero-system.firebaseio.com",
+      storageBucket: "project-korero-system.appspot.com",
+      messagingSenderId: "273119562502"
+    };
 
     Polymer({
       is: 'project-korero-system-app-shell',
@@ -114,10 +127,16 @@ Wham! It's all awesome now!
             return {};
           }
         },
+        config: {
+          type: Object,
+          readOnly: true,
+          value: function() {
+            return config;
+          }
+        }
       },
 
       ready: function() {
-
         Polymer.RenderStatus.afterNextRender(this, function () {
           if (KORERO && KORERO.ServiceWorkerRegistration) {
             KORERO.ServiceWorkerRegistration.register();

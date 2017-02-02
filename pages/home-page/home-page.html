@@ -1,5 +1,6 @@
 <!-- Polymer dependencies -->
 <link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/polymerfire/firebase-auth.html">
 
 <!-- Style dependency -->
 <link rel="import" href="home-page-style.html">
@@ -11,6 +12,8 @@
         display: block;
       }
     </style>
+
+    <firebase-auth id="auth" user="{{user}}" on-error="_catchError"></firebase-auth>
 
 
   </template>

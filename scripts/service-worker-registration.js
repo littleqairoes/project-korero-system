@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-PROJECTKORERO-SYSTEM.ServiceWorkerRegistration = (function () {
+KORERO.ServiceWorkerRegistration = (function () {
   'use strict';
 
   // Ensure we only attempt to register the SW once.
@@ -40,7 +40,7 @@ PROJECTKORERO-SYSTEM.ServiceWorkerRegistration = (function () {
               switch (installingWorker.state) {
                 case 'installed':
                   if (!navigator.serviceWorker.controller) {
-                    PROJECTKORERO-SYSTEM.Elements.Template.$.toast.show(
+                    KORERO.Elements.Template.$.toast.showMessage(
                       'Caching complete! Future visits will work offline.');
                   }
                   break;
@@ -52,7 +52,7 @@ PROJECTKORERO-SYSTEM.ServiceWorkerRegistration = (function () {
             };
           };
         }).catch(function (e) {
-          PROJECTKORERO-SYSTEM.Analytics.trackError('navigator.serviceWorker.register() error', e);
+          KORERO.Analytics.trackError('navigator.serviceWorker.register() error', e);
           Raven.captureMessage('Service worker registration failed:', e);
           console.error('Service worker registration failed:', e);
         });
@@ -71,9 +71,9 @@ PROJECTKORERO-SYSTEM.ServiceWorkerRegistration = (function () {
           window.location.reload();
         };
 
-        if (PROJECTKORERO-SYSTEM.Elements && PROJECTKORERO-SYSTEM.Elements.Template &&
-          PROJECTKORERO-SYSTEM.Elements.Template.$.toast.show) {
-          PROJECTKORERO-SYSTEM.Elements.Template.$.toast.show(
+        if (KORERO.Elements && KORERO.Elements.Template &&
+          KORERO.Elements.Template.$.toast.showMessage) {
+          KORERO.Elements.Template.$.toast.showMessage(
             'A new version of this app is available.', tapHandler, 'Refresh',
             null, 0); // duration 0 indications shows the toast indefinitely.
         } else {

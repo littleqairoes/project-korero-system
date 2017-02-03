@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-window.PROJECTKORERO-SYSTEM = window.PROJECTKORERO-SYSTEM || {};
+window.KORERO = window.KORERO || {};
 
-PROJECTKORERO-SYSTEM.Analytics = PROJECTKORERO-SYSTEM.Analytics || (function (exports) {
+KORERO.Analytics = KORERO.Analytics || (function (exports) {
     'use strict';
 
     /**
@@ -94,7 +94,7 @@ PROJECTKORERO-SYSTEM.Analytics = PROJECTKORERO-SYSTEM.Analytics || (function (ex
      * pageview, to ensure all hits can be grouped by these custom dimensions.
      */
     Analytics.prototype.initTrackerReadyState = function () {
-      this.readyState_ = PROJECTKORERO-SYSTEM.Deferred.createDeferred();
+      this.readyState_ = KORERO.Deferred.createDeferred();
 
       // In the event of an error or a failure in the auth code, we set a
       // timeout so the promise always resolves. In such cases, some hits

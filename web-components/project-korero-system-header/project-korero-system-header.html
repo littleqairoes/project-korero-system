@@ -20,10 +20,10 @@
 
     <!-- then the app-header -->
     <app-header
-        fixed$="[[fixed]]" 
-        sticky$="[[sticky]]" 
+        fixed$="[[fixed]]"
+        sticky$="[[sticky]]"
         condenses$="[[condenses]]"
-        disabled$="[[disabled]]" 
+        disabled$="[[disabled]]"
         effects="[[effects]]"
         effects-config="[[effectsConfig]]"
         reveals$="[[reveals]]"
@@ -33,19 +33,19 @@
         threshold-triggered="[[tresholdTriggered]]">
 
       <app-toolbar>
-        
+
         <!-- Drawer button -->
-        <paper-icon-button
+        <!--<paper-icon-button
           icon="default:menu"
           class$="hide-on-tablet-landscape-up drawer-toggle-button [[[[_scrollProgressChangedForDrawerToggleButton(scrollProgress)]]]]"
           on-tap="_toggleDrawer">
-        </paper-icon-button>
+        </paper-icon-button>-->
 
-        <div main-title>Project Korero System</div>
+        <div main-title>Interface System</div>
 
         <!-- Navigation -->
         <project-korero-system-navigation navigation-list="[[navigationList]]" user="{{user}}" route="[[route]]"></project-korero-system-navigation>
-        
+
       </app-toolbar>
     </app-header>
   </template>
@@ -88,14 +88,14 @@
         this.fire('toggle-drawer');
       },
 
-      _scrollProgressChanged: function(scrollProgress) {        
+      _scrollProgressChanged: function(scrollProgress) {
         var appHeader = this.$$('app-header');
         // var fadeBackgroundEffect = appHeader.createEffect('fade-background');
         var isCondensed = scrollProgress < this.scrollProgressThreshold;
         this.shadow = !isCondensed;
         // fadeBackgroundEffect.run(isCondensed ? 1 : 0);
       },
-      
+
       _scrollProgressChangedForDrawerToggleButton: function(scrollProgress) {
         if (scrollProgress > 0) {
           return 'drawer-toggle-button-scrolled';

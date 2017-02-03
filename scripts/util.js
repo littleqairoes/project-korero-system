@@ -26,7 +26,7 @@ window.debugLog = function debugLog(var_args) {
   }
 };
 
-PROJECTKORERO-SYSTEM.Util = PROJECTKORERO-SYSTEM.Util || (function () {
+KORERO.Util = KORERO.Util || (function () {
 
 
     'use strict';
@@ -184,7 +184,7 @@ PROJECTKORERO-SYSTEM.Util = PROJECTKORERO-SYSTEM.Util || (function () {
       // relevant, so grab those.
       var location = (error && typeof error.stack === 'string') ?
         error.stack.slice(-500) : 'Unknown Location';
-      PROJECTKORERO-SYSTEM.Analytics.trackError(location, error);
+      KORERO.Analytics.trackError(location, error);
     };
 
     /**

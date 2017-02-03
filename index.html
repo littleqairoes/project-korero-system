@@ -56,11 +56,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <meta name="msapplication-tap-highlight" content="no">
 
     <script>
-      window.PROJECTKORERO-SYSTEM = window.PROJECTKORERO-SYSTEM || {};
+      window.KORERO = window.KORERO || {};
       window.PREFIX = '/';
-      
-      window.PROJECTKORERO-SYSTEM.LoaderMessagesIndex = 2;
-      window.PROJECTKORERO-SYSTEM.LoaderMessages = [
+
+      window.KORERO.LoaderMessagesIndex = 2;
+      window.KORERO.LoaderMessages = [
         'Might be the network...',
         'If you are using Safari 9, you might need to update it to the latest version...',
         'If you are using a lower version of Firefox or Chrome, please update it above version 30...',
@@ -71,34 +71,34 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ]
       window.RavenLoaderMessages = [];
 
-      window.PROJECTKORERO-SYSTEM.LoaderTimerShort = setTimeout(function() {
-        window.PROJECTKORERO-SYSTEM.LoaderText = document.getElementById('loader-text');
-        window.PROJECTKORERO-SYSTEM.LoaderText.innerHTML = 'Might be the network...'
+      window.KORERO.LoaderTimerShort = setTimeout(function() {
+        window.KORERO.LoaderText = document.getElementById('loader-text');
+        window.KORERO.LoaderText.innerHTML = 'Might be the network...'
       }, 6000);
 
-      window.PROJECTKORERO-SYSTEM.LoaderTimerShorter = setTimeout(function() {
-        window.PROJECTKORERO-SYSTEM.LoaderText = document.getElementById('loader-text');
-        window.PROJECTKORERO-SYSTEM.LoaderText.innerHTML = 'Please wait...'
+      window.KORERO.LoaderTimerShorter = setTimeout(function() {
+        window.KORERO.LoaderText = document.getElementById('loader-text');
+        window.KORERO.LoaderText.innerHTML = 'Please wait...'
       }, 14000);
 
-      window.PROJECTKORERO-SYSTEM.LoaderTimer = setTimeout(function() {
+      window.KORERO.LoaderTimer = setTimeout(function() {
         console.log('Really slow network here')
         RavenLoaderMessages.push('Really slow network here');
-        window.PROJECTKORERO-SYSTEM.LoaderText.innerHTML = 'If you are using Safari 9, you might need to update it to the latest version...';
+        window.KORERO.LoaderText.innerHTML = 'If you are using Safari 9, you might need to update it to the latest version...';
         window.slowNetwork = new Date();
 
-        window.PROJECTKORERO-SYSTEM.LoaderMessagesInterval = setInterval(function() {
-          window.PROJECTKORERO-SYSTEM.LoaderText.innerHTML = window.PROJECTKORERO-SYSTEM.LoaderMessages[window.PROJECTKORERO-SYSTEM.LoaderMessagesIndex];
-          window.PROJECTKORERO-SYSTEM.LoaderMessagesIndex++;
-          if (window.PROJECTKORERO-SYSTEM.LoaderMessagesIndex >= window.PROJECTKORERO-SYSTEM.LoaderMessages.length) {
-            window.PROJECTKORERO-SYSTEM.LoaderMessagesIndex = 0;
+        window.KORERO.LoaderMessagesInterval = setInterval(function() {
+          window.KORERO.LoaderText.innerHTML = window.KORERO.LoaderMessages[window.KORERO.LoaderMessagesIndex];
+          window.KORERO.LoaderMessagesIndex++;
+          if (window.KORERO.LoaderMessagesIndex >= window.KORERO.LoaderMessages.length) {
+            window.KORERO.LoaderMessagesIndex = 0;
           }
         }, 7000);
 
         sendRavenMessages();
       }, 20000);
 
-      window.PROJECTKORERO-SYSTEM.LoaderTimerLong = setTimeout(function() {
+      window.KORERO.LoaderTimerLong = setTimeout(function() {
         console.log('Really really slow network here')
         RavenLoaderMessages.push('Really really slow network here');
         sendRavenMessages();
@@ -150,7 +150,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           if (window.ga) {
             ga('send', 'event', 'error', file + ':' + lineNumber, message);
           }
-          
+
           if (window.Raven && error) {
             Raven.captureException(error);
             // Raven.showReportDialog();
@@ -257,7 +257,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
     </div>
 
-    <project-korero-system-app-shell></project-korero-system-app-shell>
+    <project-korero-system-app-shell id="core-app"></project-korero-system-app-shell>
 
     <script>
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

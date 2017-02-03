@@ -1,0 +1,351 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="project-korero-system-utils-behavior.html">
+
+<script>
+  (function(){
+    'use strict';
+    /** @polymerBehavior KORERO.UserBehavior */
+    KORERO.UserBehaviorImpl = {
+
+      properties: {
+        user: {
+          type: Object,
+          notify: true,
+          // value: function() { return null; },
+        },
+        signedIn: {
+          type: Boolean,
+          notify: true,
+          value: false
+        },
+        roles: {
+          type: Object,
+          notify: true,
+          value: function() { return {}; }
+        },
+        owner: {
+          type: Object,
+          value: function() { return null; }
+        },
+        userPath: {
+          type: Object,
+          readOnly: true,
+          value: function() { return this._userPath; }
+        },
+        userGroup: {
+          type: String,
+          readOnly: true,
+          value: function() { return this._userGroup; }
+        },
+        profile: {
+          type: Object
+        },
+        emailSuffix: {
+          type: String,
+          readOnly: true,
+          value: '@gmail.com' //'@u.nus.edu'
+        }
+      },
+
+      _memberListener: null,
+
+      _pendingListener: null,
+
+      detached: function() {
+        if (this._memberListener && this.user) {
+          firebase.database().ref(this._userPath.options.members + '/' + this.user.uid).off('value', this._memberListener);
+          this._memberListener = null;
+        }
+
+        if (this._pendingListener && this.user) {
+          firebase.database().ref(this._userPath.options.pending + '/' + this.user.uid + '/value').off('value', this._pendingListener);
+          this._pendingListener = null;
+        }
+      },
+
+      observers: [
+        '_getRoles(user.uid)'
+      ],
+
+      get _userGroup() {
+        return 'userGroup';
+      },
+
+      get _userPath() {
+        var roles = this._version + '/' + this._userGroup + '/roles';
+        return {
+          profiles: this._version + '/' + this._userGroup + '/profiles',
+          groups: this._version + '/' + this._userGroup + '/groups',
+          roles: {
+            admin: roles + '/admin',
+            groups: roles + '/groups',
+            students: roles + '/students'
+          },
+        };
+      },
+
+      _getRoles: function(uid) {
+        // // console.log(uid);
+        // if (uid && firebase) {
+
+        //   //member
+        //   this._memberListener = firebase.database().ref(this._userPath.options.members + '/' + uid).on('value', (dataSnapshot) => {
+        //     var m = dataSnapshot.val();
+        //     var roles = {};
+        //     if (m) {
+        //       var a1 = m.admin;
+        //       var e1 = m.editor;
+        //       var s1 = m.staff;
+        //       var m1 = m.member;
+
+
+        //       roles.admin = a1;
+        //       roles.editor = e1 || a1;
+        //       roles.staff = s1 || e1 || a1;
+        //       roles.member = m1 || s1 || e1 || a1;
+        //     }
+
+        //     this.roles = roles;
+
+        //   }, this._catchError.bind(this));
+
+        //   //pending
+        //   this._pendingListener = firebase.database().ref(this._userPath.options.pending + '/' + uid + '/value').on('value', (dataSnapshot) => {
+        //     var roles = {}
+        //     if (dataSnapshot.val()) {
+        //       roles = {};
+        //       roles.pending = dataSnapshot.val();
+        //       this.roles = roles;
+        //     } else if (!this.roles.member) {
+        //       this.roles = roles;
+        //     }
+        //   }, this._catchError.bind(this));
+        // } else if (!firebase) {
+        //   console.error(new Error('Firebase has not been set'))
+        // }
+      },
+
+      _checkAuthRole: function(user, auth, roles, role, owner, flag) {
+
+        // if (auth) {
+        //   if (role) {
+        //     if (flag) {
+        //       return user && (roles[role] && (owner && owner.uid === user.uid));
+        //     }
+        //     return user && (roles[role] || (owner && owner.uid === user.uid));
+        //   }
+        //   return user;
+        // }
+        // return true;
+      },
+
+      // _checkPermission: function(role, owner, flag) {
+      //   return this._checkAuthRole(this.user, true, this.roles, role, owner, flag);
+      // },
+
+      // _checkPermissionWithoutOwner: function(role) {
+      //   return this._checkAuthRole(this.user, true, this.roles, role);
+      // },
+
+      // _checkPending: function(id) {
+      //   return this.user.uid === id && this._checkPermissionWithoutOwner('pending');
+      // },
+
+      // _checkNonMember: function(id) {
+      //   return this.user.uid === id && !(this._checkPermissionWithoutOwner('pending') || this._checkPermissionWithoutOwner('member'))
+      // },
+
+      // _checkOwner: function(owner, user) {
+      //   if (owner && user) {
+      //     return owner.uid === user.uid
+      //   }
+      // },
+
+      // _checkProfileMember: function(m) {
+      //   var a1 = m.admin;
+      //   var e1 = m.editor;
+      //   var s1 = m.staff;
+      //   var m1 = m.member;
+
+      //   return m1 || s1 || e1 || a1
+      // },
+
+      // _checkProfilePendingMember: function(m) {
+      //   return m.pending;
+      // },
+
+      _checkProfile: function(user, ref, fullname, profile) {
+        if (!profile.val()) {
+          var obj = {
+            email: user.email,
+            fullname: fullname
+          }
+
+          var updates = {};
+          updates[ref] = obj;
+          updates[this.userPath.roles.students + '/' + user.uid] = {value: firebase.database.ServerValue.TIMESTAMP};
+          return firebase.database().ref().update(updates).then(() => {
+            KORERO.Elements.Template.$.router._path = '/';
+          }).catch(this._catchError.bind(this));
+        } else {
+          this._showMessage('Profile exists already for ' + user.email);
+          KORERO.Elements.Template.$.router._path = '/';
+        }
+      },
+
+      _displayName: function(user) {
+        if (user) return user.displayName ? user.displayName : user.email;
+      },
+
+      _signUpSuccess: function(fullname, user) {
+        var ref = this.userPath.profiles + '/' + user.uid;
+        this._showMessage('Welcome ' + user.email + '!');
+        if (firebase) {
+          firebase.database().ref(ref).once('value', this._checkProfile.bind(this, user, ref, fullname));
+        } else {
+          throw new Error('No firebase app connected');
+        }
+      },
+
+      _loginSuccess: function(result) {
+        this._showMessage('Welcome ' + result.user.email + '!');
+        KORERO.Elements.Template.$.router._path = '/';
+      },
+
+      _logoutSuccess: function(result) {
+
+        this._showMessage('Goodbye!');
+        setTimeout(() => {
+          KORERO.Elements.Template.$.router._path = '/';
+          // window.location.href="/"
+        }, 1000)
+      },
+
+      sendResetPassword: function() {
+        var username = this.$$('#username').value;
+
+        if (!username) {
+          this.$$('#username').errorMessage = 'Please put your matriculation number';
+          this.$$('#username').inputElement.focus();
+          return this.$$('#username').invalid = true;;
+        }
+        firebase.auth().sendPasswordResetEmail(username + this.emailSuffix).then(() => {
+          this._showMessage('Password reset email sent')
+        });
+      },
+
+      resetPassword: function() {
+
+      },
+
+      changePassword: function() {
+        var password = this.$$('#password').value;
+        var password2 = this.$$('#password2').value;
+
+        if (!password) {
+          this.$$('#password').errorMessage = 'Please put a password';
+          this.$$('#password').inputElement.focus();
+          return this.$$('#password').invalid = true;;
+        }
+
+        if (!password2) {
+          this.$$('#password2').errorMessage = 'Please retype your password';
+          this.$$('#password2').inputElement.focus();
+          return this.$$('#password2').invalid = true;;
+        }
+
+        if (password !== password2) {
+          this.$$('#password2').errorMessage = 'Please type the same password as above';
+          this.$$('#password2').inputElement.focus();
+          return this.$$('#password2').invalid = true;;
+        }
+      },
+
+      login: function() {
+        var username = this.$$('#username').value;
+        var password = this.$$('#password').value;
+
+        if (!username) {
+          this.$$('#username').errorMessage = 'Please put your matriculation number';
+          this.$$('#username').inputElement.focus();
+          return this.$$('#username').invalid = true;;
+        }
+
+        if (!password) {
+          this.$$('#password').errorMessage = 'Please put a password';
+          this.$$('#password').inputElement.focus();
+          return this.$$('#password').invalid = true;;
+        }
+
+        this.$.auth.signInWithEmailAndPassword(username + this.emailSuffix, password).then(() => {
+          this._showMessage('You are successfully logged in');
+        }).catch(this._catchError.bind(this));
+      },
+
+      signUp: function() {
+        var fullname = this.$$('#fullname').value;
+        var username = this.$$('#username').value;
+        var password = this.$$('#password').value;
+        var password2 = this.$$('#password2').value;
+
+        if (!fullname) {
+          this.$$('#fullname').errorMessage = 'Please put your full name';
+          this.$$('#fullname').inputElement.focus();
+          return this.$$('#fullname').invalid = true;;
+        }
+
+        if (!username) {
+          this.$$('#username').errorMessage = 'Please put your matriculation number';
+          this.$$('#username').inputElement.focus();
+          return this.$$('#username').invalid = true;;
+        }
+
+        if (!password) {
+          this.$$('#password').errorMessage = 'Please put a password';
+          this.$$('#password').inputElement.focus();
+          return this.$$('#password').invalid = true;;
+        }
+
+        if (!password2) {
+          this.$$('#password2').errorMessage = 'Please retype your password';
+          this.$$('#password2').inputElement.focus();
+          return this.$$('#password2').invalid = true;;
+        }
+
+        if (password !== password2) {
+          this.$$('#password2').errorMessage = 'Please type the same password as above';
+          this.$$('#password2').inputElement.focus();
+          return this.$$('#password2').invalid = true;;
+        }
+
+        this.$.auth.createUserWithEmailAndPassword(username + this.emailSuffix, password).then(this._signUpSuccess.bind(this, fullname)).catch(this._catchError.bind(this))
+      },
+
+      loginAdmin: function(e) {
+        if (this.$.auth && this.$.auth.signInWithPopup) {
+          this.$.auth.provider = e.target.id || "google";
+
+          this.$.auth.signInWithPopup().then(this._loginSuccess.bind(this)).catch(this._catchError.bind(this));
+        } else {
+          this._catchError(new Error('no auth component found'));
+        }
+      },
+
+      logout: function() {
+        if (this.user) {
+          if (this.$.auth && this.$.auth.signOut) {
+            this.$.auth.signOut().then(this._logoutSuccess.bind(this)).catch(this._catchError.bind(this));
+          } else {
+            this._catchError(new Error('no auth component found'));
+          }
+        } else {
+          this._showMessage('You are already logged out.');
+        }
+      },
+    };
+    KORERO.UserBehavior = [
+      KORERO.UtilsBehavior,
+      KORERO.UserBehaviorImpl
+    ];
+  })();
+</script>

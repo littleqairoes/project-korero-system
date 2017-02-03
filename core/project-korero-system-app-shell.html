@@ -2,11 +2,17 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/qairoe-app-layout/qairoe-app-layout.html">
 <link rel="import" href="../bower_components/qairoe-app-router/qairoe-app-router.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-app-script.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-auth-script.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-database-script.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-storage-script.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-app.html">
 
 <!-- Custom Element dependencies -->
 
 <link rel="import" href="../web-components/project-korero-system-header/project-korero-system-header.html">
 <link rel="import" href="../web-components/project-korero-system-drawer/project-korero-system-drawer.html">
+<link rel="import" href="../web-components/project-korero-system-toast/project-korero-system-toast.html">
 
 <!--
 `<project-korero-system-app-shell>` is the main core element called in the index.html that
@@ -25,8 +31,8 @@ Wham! It's all awesome now!
   <!-- Lazy loaded dependencies -->
   <!-- LAZY LOADER STARTS HERE -->
   <link rel="lazy-import" href="/pages/home-page/home-page.html" group="home-page">
-  <link rel="lazy-import" href="/pages/first-page/first-page.html" group="first-page">
-  <link rel="lazy-import" href="/pages/second-page/second-page.html" group="second-page">
+  <link rel="lazy-import" href="/pages/interface-page/interface-page.html" group="interface-page">
+  <link rel="lazy-import" href="/pages/admin-page/admin-page.html" group="admin-page">
   <link rel="lazy-import" href="/pages/not-authorized-page/not-authorized-page.html" group="not-authorized-page">
   <link rel="lazy-import" href="/pages/not-found-page/not-found-page.html" group="not-found-page">
   <!-- LAZY LOADER ENDS HERE -->
@@ -35,30 +41,40 @@ Wham! It's all awesome now!
     <style is="custom-style">
     </style>
 
+    <firebase-app
+        auth-domain="[[config.authDomain]]"
+        database-url="[[config.databaseURL]]"
+        api-key="[[config.apiKey]]"
+        storage-bucket="[[config.storageBucket]]"></firebase-app>
+
     <qairoe-app-layout scroll-progress="{{scrollProgress}}">
 
-      <project-korero-system-header 
-        main-header 
+      <project-korero-system-header
+        main-header
         scroll-progress="{{scrollProgress}}"
         route="[[currentRoute]]"
         user="{{user}}"></project-korero-system-header>
-      <project-korero-system-drawer 
-        main-drawer 
-        navigation-list="[[navigationList]]" 
+      <!--<project-korero-system-drawer
+        main-drawer
+        navigation-list="[[navigationList]]"
         scroll-progress="{{scrollProgress}}"
-        route="[[currentRoute]]" 
-        user="{{user}}"></project-korero-system-drawer>
+        route="[[currentRoute]]"
+        user="{{user}}"></project-korero-system-drawer>-->
 
       <qairoe-app-router
+          id="router"
           main-content
           current-route="{{currentRoute}}"
           parent-tag-name="project-korero-system-app-shell"
           on-view-loaded="viewLoaded">
 
         <!-- ROUTER STARTS HERE -->
-        <home-page route="/"></home-page>
-        <first-page route="/first"></first-page>
-        <second-page route="/second"></second-page>
+        <home-page route="/" user="{{user}}" login-page></home-page>
+        <home-page route="/sign-up" user="{{user}}" sign-up-page></home-page>
+        <home-page route="/reset-password" user="{{user}}" reset-password-page></home-page>
+        <home-page route="/reset-password/:token" user="{{user}}" reset-password-page></home-page>
+        <interface-page route="/interface" user="{{user}}"></interface-page>
+        <admin-page route="/admin" user="{{user}}"></admin-page>
         <not-authorized-page route="not-authorized"></not-authorized-page>
         <not-found-page route="not-found"></not-found-page>
         <!-- ROUTER ENDS HERE -->
@@ -66,9 +82,17 @@ Wham! It's all awesome now!
       </qairoe-app-router>
     </qairoe-app-layout>
 
+    <project-korero-system-toast id="toast"></project-korero-system-toast>
+
   </template>
   <script>
-    /*global Polymer*/
+    var config = {
+      apiKey: "AIzaSyCCV4ZDda20CiMANkOK1we4HTELlRFA-oc",
+      authDomain: "project-korero-system.firebaseapp.com",
+      databaseURL: "https://project-korero-system.firebaseio.com",
+      storageBucket: "project-korero-system.appspot.com",
+      messagingSenderId: "273119562502"
+    };
 
     Polymer({
       is: 'project-korero-system-app-shell',
@@ -79,18 +103,14 @@ Wham! It's all awesome now!
           readOnly: true,
           value: function() {
             return [
-              {
-                label: 'Home',
-                url: '/'
-              },
-              {
-                label: 'First Page',
-                url: '/first'
-              },
-              {
-                label: 'Second Page',
-                url: '/second'
-              }
+              // {
+              //   label: 'Home',
+              //   url: '/'
+              // },
+              // {
+              //   label: 'admin Page',
+              //   url: '/admin'
+              // }
             ];
           }
         },
@@ -110,49 +130,55 @@ Wham! It's all awesome now!
             return {};
           }
         },
+        config: {
+          type: Object,
+          readOnly: true,
+          value: function() {
+            return config;
+          }
+        }
       },
 
       ready: function() {
-
         Polymer.RenderStatus.afterNextRender(this, function () {
-          if (PROJECTKORERO-SYSTEM && PROJECTKORERO-SYSTEM.ServiceWorkerRegistration) {
-            PROJECTKORERO-SYSTEM.ServiceWorkerRegistration.register();
-          }     
-          this.fire('project-nice-app-shell-ready');         
+          if (KORERO && KORERO.ServiceWorkerRegistration) {
+            KORERO.ServiceWorkerRegistration.register();
+          }
+          this.fire('project-nice-app-shell-ready');
         }.bind(this));
       },
 
       viewLoaded: function() {
         console.log('loaded')
-        if (PROJECTKORERO-SYSTEM && PROJECTKORERO-SYSTEM.Elements && PROJECTKORERO-SYSTEM.Elements.Loader) {
-          PROJECTKORERO-SYSTEM.Elements.Loader.style.cssText = "display: none";
-          
+        if (KORERO && KORERO.Elements && KORERO.Elements.Loader) {
+          KORERO.Elements.Loader.style.cssText = "display: none";
+
         }
 
-        if (PROJECTKORERO-SYSTEM.LoaderTimerShort) {
-          clearTimeout(PROJECTKORERO-SYSTEM.LoaderTimerShort);
-          PROJECTKORERO-SYSTEM.LoaderTimerShort = null;
+        if (KORERO.LoaderTimerShort) {
+          clearTimeout(KORERO.LoaderTimerShort);
+          KORERO.LoaderTimerShort = null;
         }
 
-        if (PROJECTKORERO-SYSTEM.LoaderTimerShorter) {
-          clearTimeout(PROJECTKORERO-SYSTEM.LoaderTimerShorter);
-          PROJECTKORERO-SYSTEM.LoaderTimerShorter = null;
+        if (KORERO.LoaderTimerShorter) {
+          clearTimeout(KORERO.LoaderTimerShorter);
+          KORERO.LoaderTimerShorter = null;
         }
 
-        if (PROJECTKORERO-SYSTEM.LoaderTimer) {
+        if (KORERO.LoaderTimer) {
           console.log('clearing timer')
-          clearTimeout(PROJECTKORERO-SYSTEM.LoaderTimer);
-          PROJECTKORERO-SYSTEM.LoaderTimer = null;
+          clearTimeout(KORERO.LoaderTimer);
+          KORERO.LoaderTimer = null;
         }
 
-        if (PROJECTKORERO-SYSTEM.LoaderTimerLong) {
-          clearTimeout(PROJECTKORERO-SYSTEM.LoaderTimerLong);
-          PROJECTKORERO-SYSTEM.LoaderTimerLong = null;
+        if (KORERO.LoaderTimerLong) {
+          clearTimeout(KORERO.LoaderTimerLong);
+          KORERO.LoaderTimerLong = null;
         }
 
-        if (PROJECTKORERO-SYSTEM.LoaderMessagesInterval) {
-          clearInterval(PROJECTKORERO-SYSTEM.LoaderMessagesInterval);
-          PROJECTKORERO-SYSTEM.LoaderMessagesInterval = null
+        if (KORERO.LoaderMessagesInterval) {
+          clearInterval(KORERO.LoaderMessagesInterval);
+          KORERO.LoaderMessagesInterval = null
         }
 
         if (window.slowNetwork) {

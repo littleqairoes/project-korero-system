@@ -1,0 +1,29 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<dom-module id="project-korero-system-toast-style">
+<template>
+<style>
+.clickable {
+  cursor: pointer; }
+
+paper-toast {
+  user-select: none; }
+
+paper-toast[fit-bottom] {
+  width: 100%;
+  min-width: 0;
+  border-radius: 0;
+  margin: 0; }
+
+.toast-action {
+  @apply (--layout-self-center);
+  padding-left: 24px;
+  color: #eeff41;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none; }
+
+</style>
+</template>
+</dom-module>

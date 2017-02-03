@@ -221,6 +221,19 @@
         }, 1000)
       },
 
+      sendResetPassword: function() {
+        var username = this.$$('#username').value;
+
+        if (!username) {
+          this.$$('#username').errorMessage = 'Please put your matriculation number';
+          this.$$('#username').inputElement.focus();
+          return this.$$('#username').invalid = true;;
+        }
+        firebase.auth().sendPasswordResetEmail(username + this.emailSuffix).then(() => {
+          this._showMessage('Password reset email sent')
+        });
+      },
+
       resetPassword: function() {
 
       },

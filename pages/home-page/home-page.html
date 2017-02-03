@@ -118,7 +118,7 @@
             <paper-material elevation="1" class="flex-2 login-card">
               <h3>Reset Password</h3>
 
-              <form is="iron-form" on-iron-form-submit="resetPassword">
+              <form is="iron-form" on-iron-form-submit="sendResetPassword">
                 <paper-input label="matriculation number" id="username" class="input-login" required on-keypress="_formPressed" auto-validate>
                   <iron-icon icon="default:email" prefix></iron-icon>
                   <div suffix>[[emailSuffix]]</div>
@@ -126,7 +126,7 @@
 
                 <div class="horizontal layout login-box">
                   <div class="flex"></div>
-                  <paper-button on-tap="resetPassword">Reset Password</paper-button>
+                  <paper-button on-tap="sendResetPassword">Reset Password</paper-button>
                   <a href="/" class="anchor-button">
                     <paper-button >Go back</paper-button>
                   </a>
@@ -141,7 +141,33 @@
 
         <!-- RESET PASSWORD WITH TOKEN -->
         <template is="dom-if" if="[[token]]">
+          <div class="horizontal layout">
+          <div class="flex"></div>
 
+          <paper-material elevation="1" class="flex login-card">
+            <h3>Reset Password</h3>
+
+            <form is="iron-form" on-iron-form-submit="resetPassword">
+
+              <paper-input label="password" id="password" class="input-login" required type="password" auto-validate>
+                <iron-icon icon="default:fingerprint" prefix></iron-icon>
+              </paper-input>
+
+              <paper-input label="re-type password" id="password2" class="input-login" required type="password" on-keypress="_formPressed" auto-validate>
+                <iron-icon icon="default:fingerprint" prefix></iron-icon>
+              </paper-input>
+
+              <div class="horizontal layout login-box">
+                <div class="flex"></div>
+                <paper-button on-tap="resetPassword">Reset Password</paper-button>
+                <div class="flex"></div>
+              </div>
+            </form>
+
+          </paper-material>
+
+          <div class="flex"></div>
+        </div>
         </template>
       </template>
     </template>

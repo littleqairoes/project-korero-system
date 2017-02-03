@@ -69,9 +69,12 @@ Wham! It's all awesome now!
           on-view-loaded="viewLoaded">
 
         <!-- ROUTER STARTS HERE -->
-        <home-page route="/"></home-page>
-        <interface-page route="/interface"></interface-page>
-        <admin-page route="/admin"></admin-page>
+        <home-page route="/" user="{{user}}" login-page></home-page>
+        <home-page route="/sign-up" user="{{user}}" sign-up-page></home-page>
+        <home-page route="/reset-password" user="{{user}}" reset-password-page></home-page>
+        <home-page route="/reset-password/:token" user="{{user}}" reset-password-page></home-page>
+        <interface-page route="/interface" user="{{user}}"></interface-page>
+        <admin-page route="/admin" user="{{user}}"></admin-page>
         <not-authorized-page route="not-authorized"></not-authorized-page>
         <not-found-page route="not-found"></not-found-page>
         <!-- ROUTER ENDS HERE -->

@@ -11,7 +11,7 @@
         user: {
           type: Object,
           notify: true,
-          value: function() { return null; },
+          // value: function() { return null; },
         },
         signedIn: {
           type: Boolean,
@@ -39,6 +39,11 @@
         },
         profile: {
           type: Object
+        },
+        emailSuffix: {
+          type: String,
+          readOnly: true,
+          value: '@gmail.com' //'@u.nus.edu'
         }
       },
 
@@ -73,7 +78,8 @@
           groups: this._version + '/' + this._userGroup + '/groups',
           roles: {
             admin: roles + '/admin',
-            groups: roles + '/groups'
+            groups: roles + '/groups',
+            students: roles + '/students'
           },
         };
       },
@@ -168,63 +174,138 @@
       //   return m.pending;
       // },
 
-      _checkProfile: function(user, ref, profile) {
-        // if (!profile.val()) {
-        //   var obj = {
-        //     displayName: user.displayName,
-        //     email: user.email,
-        //     image: user.photoURL,
-        //   };
+      _checkProfile: function(user, ref, fullname, profile) {
+        if (!profile.val()) {
+          var obj = {
+            email: user.email,
+            fullname: fullname
+          }
 
-        //   if (user.displayName) {
-        //     var array = user.displayName.trim().split(' ');
-        //     obj.lastName = array.pop();
-        //     obj.firstName = array.join(' ');
-        //   }
-
-        //   var updates = {};
-        //   updates[ref] = obj;
-        //   // updates[this.userPath.options.pending + '/' + user.uid] = {value: firebase.database.ServerValue.TIMESTAMP}
-
-        //   return firebase.database().ref().update(updates).then(function(){
-        //     // window.location.assign('/profile?edit=true');
-        //   });
-        // } else {
-        //   window.location.assign('/');
-        // }
+          var updates = {};
+          updates[ref] = obj;
+          updates[this.userPath.roles.students + '/' + user.uid] = {value: firebase.database.ServerValue.TIMESTAMP};
+          return firebase.database().ref().update(updates).then(() => {
+            KORERO.Elements.Template.$.router._path = '/';
+          }).catch(this._catchError.bind(this));
+        } else {
+          this._showMessage('Profile exists already for ' + user.email);
+          KORERO.Elements.Template.$.router._path = '/';
+        }
       },
 
       _displayName: function(user) {
         if (user) return user.displayName ? user.displayName : user.email;
       },
 
-
-
-      _loginSuccess: function(result) {
-        var ref = this.userPath.profiles + '/' +  result.user.uid;
-        this._showMessage('Welcome ' + result.user.displayName + '!');
-
+      _signUpSuccess: function(fullname, user) {
+        var ref = this.userPath.profiles + '/' + user.uid;
+        this._showMessage('Welcome ' + user.email + '!');
         if (firebase) {
-          firebase.database().ref(ref).once('value', this._checkProfile.bind(this, result.user, ref));
+          firebase.database().ref(ref).once('value', this._checkProfile.bind(this, user, ref, fullname));
         } else {
           throw new Error('No firebase app connected');
         }
+      },
+
+      _loginSuccess: function(result) {
+        this._showMessage('Welcome ' + result.user.email + '!');
+        KORERO.Elements.Template.$.router._path = '/';
       },
 
       _logoutSuccess: function(result) {
 
         this._showMessage('Goodbye!');
         setTimeout(() => {
+          KORERO.Elements.Template.$.router._path = '/';
           // window.location.href="/"
         }, 1000)
       },
 
-      login: function() {
+      resetPassword: function() {
 
       },
 
-      signUp: function() {
+      changePassword: function() {
+        var password = this.$$('#password').value;
+        var password2 = this.$$('#password2').value;
 
+        if (!password) {
+          this.$$('#password').errorMessage = 'Please put a password';
+          this.$$('#password').inputElement.focus();
+          return this.$$('#password').invalid = true;;
+        }
+
+        if (!password2) {
+          this.$$('#password2').errorMessage = 'Please retype your password';
+          this.$$('#password2').inputElement.focus();
+          return this.$$('#password2').invalid = true;;
+        }
+
+        if (password !== password2) {
+          this.$$('#password2').errorMessage = 'Please type the same password as above';
+          this.$$('#password2').inputElement.focus();
+          return this.$$('#password2').invalid = true;;
+        }
+      },
+
+      login: function() {
+        var username = this.$$('#username').value;
+        var password = this.$$('#password').value;
+
+        if (!username) {
+          this.$$('#username').errorMessage = 'Please put your matriculation number';
+          this.$$('#username').inputElement.focus();
+          return this.$$('#username').invalid = true;;
+        }
+
+        if (!password) {
+          this.$$('#password').errorMessage = 'Please put a password';
+          this.$$('#password').inputElement.focus();
+          return this.$$('#password').invalid = true;;
+        }
+
+        this.$.auth.signInWithEmailAndPassword(username + this.emailSuffix, password).then(() => {
+          this._showMessage('You are successfully logged in');
+        }).catch(this._catchError.bind(this));
+      },
+
+      signUp: function() {
+        var fullname = this.$$('#fullname').value;
+        var username = this.$$('#username').value;
+        var password = this.$$('#password').value;
+        var password2 = this.$$('#password2').value;
+
+        if (!fullname) {
+          this.$$('#fullname').errorMessage = 'Please put your full name';
+          this.$$('#fullname').inputElement.focus();
+          return this.$$('#fullname').invalid = true;;
+        }
+
+        if (!username) {
+          this.$$('#username').errorMessage = 'Please put your matriculation number';
+          this.$$('#username').inputElement.focus();
+          return this.$$('#username').invalid = true;;
+        }
+
+        if (!password) {
+          this.$$('#password').errorMessage = 'Please put a password';
+          this.$$('#password').inputElement.focus();
+          return this.$$('#password').invalid = true;;
+        }
+
+        if (!password2) {
+          this.$$('#password2').errorMessage = 'Please retype your password';
+          this.$$('#password2').inputElement.focus();
+          return this.$$('#password2').invalid = true;;
+        }
+
+        if (password !== password2) {
+          this.$$('#password2').errorMessage = 'Please type the same password as above';
+          this.$$('#password2').inputElement.focus();
+          return this.$$('#password2').invalid = true;;
+        }
+
+        this.$.auth.createUserWithEmailAndPassword(username + this.emailSuffix, password).then(this._signUpSuccess.bind(this, fullname)).catch(this._catchError.bind(this))
       },
 
       loginAdmin: function(e) {

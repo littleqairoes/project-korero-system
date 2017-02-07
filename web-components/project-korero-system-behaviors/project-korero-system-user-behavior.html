@@ -212,6 +212,10 @@
         KORERO.Elements.Template.$.router._path = '/';
       },
 
+      _loginAdminSuccess: function(result) {
+        this._showMessage('Welcome ' + result.user.email + '!');
+      },
+
       _logoutSuccess: function(result) {
 
         this._showMessage('Goodbye!');
@@ -325,7 +329,7 @@
         if (this.$.auth && this.$.auth.signInWithPopup) {
           this.$.auth.provider = e.target.id || "google";
 
-          this.$.auth.signInWithPopup().then(this._loginSuccess.bind(this)).catch(this._catchError.bind(this));
+          this.$.auth.signInWithPopup().then(this._loginAdminSuccess.bind(this)).catch(this._catchError.bind(this));
         } else {
           this._catchError(new Error('no auth component found'));
         }

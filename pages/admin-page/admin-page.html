@@ -1,28 +1,55 @@
 <!-- Polymer dependencies -->
 <link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/polymerfire/firebase-auth.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-user-behavior.html">
 
 <!-- Style dependency -->
 <link rel="import" href="admin-page-style.html">
 
 <dom-module id="admin-page">
   <template>
-    <style is="custom-style" include="admin-page-style">
+    <style is="custom-style" include="admin-page-style iron-flex iron-flex-alignment iron-flex-factors">
       :host {
         display: block;
       }
     </style>
 
-    <div class="card">
-      <div class="circle">2</div>
-      <h1>View Two</h1>
-      <p>Ut labores minimum atomorum pro. Laudem tibique ut has.
-      <p>Lorem ipsum dolor sit amet, per in nusquam nominavi periculis, sit elit oportere ea.Lorem ipsum dolor sit amet, per in nusquam nominavi periculis, sit elit oportere ea.Cu mei vide viris gloriatur, at populo eripuit sit.</p>
-    </div>
+    <firebase-auth id="auth" user="{{user}}" on-error="_catchError"></firebase-auth>
+
+    <template is="dom-if" if="[[user]]">
+
+    </template>
+
+    <template is="dom-if" if="[[!user]]">
+      <div class="horizontal layout">
+        <div class="flex"></div>
+
+        <paper-material elevation="1" class="flex login-card">
+          <h3>Login</h3>
+
+          <div class="horizontal layout login-box">
+            <div class="flex"></div>
+            <paper-button on-tap="loginAdmin">Login via Google</paper-button>
+            <div class="flex"></div>
+          </div>
+
+        </paper-material>
+
+        <div class="flex"></div>
+      </div>
+    </template>
   </template>
 
   <script>
     Polymer({
-      is: 'admin-page'
+      is: 'admin-page',
+
+      behaviors: [
+        KORERO.UserBehavior
+      ],
     });
   </script>
 </dom-module>

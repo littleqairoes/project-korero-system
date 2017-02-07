@@ -6,6 +6,8 @@
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../web-components/project-korero-system-icons/project-korero-system-icons.html">
 <link rel="import" href="../../web-components/project-korero-system-navigation/project-korero-system-navigation.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-user-behavior.html">
 
 <!-- Style dependency -->
 <link rel="import" href="project-korero-system-header-style.html">
@@ -17,6 +19,8 @@
         display: block;
       }
     </style>
+
+    <firebase-auth id="auth" user="{{user}}" on-error="_catchError"></firebase-auth>
 
     <!-- then the app-header -->
     <app-header
@@ -45,6 +49,11 @@
 
         <!-- Navigation -->
         <project-korero-system-navigation navigation-list="[[navigationList]]" user="{{user}}" route="[[route]]"></project-korero-system-navigation>
+
+        <template is="dom-if" if="[[user]]">
+          Hi [[user.email]]
+          <paper-button on-tap="logout">Logout</paper-button>
+        </template>
 
       </app-toolbar>
     </app-header>
@@ -83,6 +92,10 @@
           value: 0
         }
       },
+
+      behaviors: [
+        KORERO.UserBehavior
+      ],
 
       _toggleDrawer: function() {
         this.fire('toggle-drawer');

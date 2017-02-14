@@ -2,6 +2,7 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/polymerfire/firebase-auth.html">
 <link rel="import" href="../../bower_components/polymerfire/firebase-document.html">
+<link rel="import" href="../../bower_components/polymerfire/firebase-query.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../../bower_components/paper-material/paper-material.html">
 <link rel="import" href="../../bower_components/paper-fab/paper-fab.html">
@@ -9,6 +10,7 @@
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../web-components/project-korero-system-icons/project-korero-system-icons.html">
+<link rel="import" href="../../web-components/project-korero-system-interface-item/project-korero-system-interface-item.html">
 <link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-user-behavior.html">
 <link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-interface-behavior.html">
 
@@ -48,14 +50,24 @@
 
       <firebase-document path="[[userPath.roles.admin]]/[[user.uid]]/value" data="{{isAdmin}}"></firebase-document>
       
+      
       <template is="dom-if" if="[[!_forceZero(isAdmin)]]">
         Please contact admin and give him this number: [[user.uid]]
       </template>
 
       <template is="dom-if" if="[[_forceZero(isAdmin)]]">
+
+        <firebase-query path="[[interfacePath.videos]]" data="{{videos}}"></firebase-query>
+        
         <div class="horizontal layout">
           <div class="flex"></div>
-          <div class="flex-5"></div>
+          <div class="flex-5">
+            
+            <template is="dom-repeat" items="[[videos]]">
+              <project-korero-system-interface-item video="[[item]]" is-admin="[[_forceZero(isAdmin)]]"></project-korero-system-interface-item>
+            </template>
+            
+          </div>
           <div class="flex"></div>
         </div>
         
@@ -88,6 +100,14 @@
         KORERO.UserBehavior,
         KORERO.InterfaceBehavior
       ],
+
+      observers: [
+        '_check(videos.splices)'
+      ],
+
+      _check: function(e) {
+        console.log(e)
+      },
 
       _openAddDialog: function() {
         this.$$('#add-dialog').open();

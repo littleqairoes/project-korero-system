@@ -23,7 +23,8 @@
     "iron-form": "PolymerElements/iron-form#^1.1.4",
     "uniflow-polymer": "google/uniflow-polymer#^0.5.0",
     "paper-fab": "PolymerElements/paper-fab#^1.2.1",
-    "paper-dialog": "PolymerElements/paper-dialog#^1.1.0"
+    "paper-dialog": "PolymerElements/paper-dialog#^1.1.0",
+    "google-youtube": "GoogleWebComponents/google-youtube#^1.2.1"
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"

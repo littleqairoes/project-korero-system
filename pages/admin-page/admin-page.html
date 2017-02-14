@@ -99,15 +99,7 @@
       behaviors: [
         KORERO.UserBehavior,
         KORERO.InterfaceBehavior
-      ],
-
-      observers: [
-        '_check(videos.splices)'
-      ],
-
-      _check: function(e) {
-        console.log(e)
-      },
+      ],      
 
       _openAddDialog: function() {
         this.$$('#add-dialog').open();

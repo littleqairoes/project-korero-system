@@ -1,10 +1,16 @@
 <!-- Polymer dependencies -->
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/polymerfire/firebase-auth.html">
+<link rel="import" href="../../bower_components/polymerfire/firebase-document.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../web-components/project-korero-system-icons/project-korero-system-icons.html">
 <link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-user-behavior.html">
+<link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-interface-behavior.html">
 
 <!-- Style dependency -->
 <link rel="import" href="admin-page-style.html">
@@ -18,10 +24,6 @@
     </style>
 
     <firebase-auth id="auth" user="{{user}}" on-error="_catchError"></firebase-auth>
-
-    <template is="dom-if" if="[[user]]">
-
-    </template>
 
     <template is="dom-if" if="[[!user]]">
       <div class="horizontal layout">
@@ -41,15 +43,110 @@
         <div class="flex"></div>
       </div>
     </template>
+
+    <template is="dom-if" if="[[user]]">
+
+      <firebase-document path="[[userPath.roles.admin]]/[[user.uid]]/value" data="{{isAdmin}}"></firebase-document>
+      
+      <template is="dom-if" if="[[!_forceZero(isAdmin)]]">
+        Please contact admin and give him this number: [[user.uid]]
+      </template>
+
+      <template is="dom-if" if="[[_forceZero(isAdmin)]]">
+        <div class="horizontal layout">
+          <div class="flex"></div>
+          <div class="flex-5"></div>
+          <div class="flex"></div>
+        </div>
+        
+        <paper-fab icon="default:add" id="add-fab" on-tap="_openAddDialog"></paper-fab>
+                
+        <paper-dialog id="add-dialog" modal>
+          <h2>Create New Video Discussion</h2>
+
+          <paper-input label="Title" id="title" auto-validate></paper-input>
+          <paper-input label="Youtube Video Link" id="video" auto-validate></paper-input>
+          <!--https://www.youtube.com/watch?v=qGlK0NLYVH4-->
+          <div class="horizontal layout">
+            
+            <paper-button raised on-tap="_createInterface">Create</paper-button>
+            <paper-button raised on-tap="_closeAddDialog">Cancel</paper-button>  
+          </div>  
+        </paper-dialog>
+        
+      </template>
+    </template>
   </template>
+
+  
 
   <script>
     Polymer({
       is: 'admin-page',
 
       behaviors: [
-        KORERO.UserBehavior
+        KORERO.UserBehavior,
+        KORERO.InterfaceBehavior
       ],
+
+      _openAddDialog: function() {
+        this.$$('#add-dialog').open();
+      },
+
+      _closeAddDialog: function() {
+        this.$$('#add-dialog').close();
+      },
+
+      _createInterface: function() {
+        this._showMessage('Creating interface...');
+        var title = this.$$('#title').value;
+        var youtubeurl = this.$$('#video').value;
+
+        if (!title.trim()) {
+          this._showMessage('Please put title...')
+          this.$$('#title').focus();
+          this.$$('#title').errorMessage = 'Please put title...';
+          this.$$('#title').invalid = true;
+          return;
+        }
+
+        if (!youtubeurl.trim()) {
+          this._showMessage('Please put proper youtube url...')
+          this.$$('#video').focus();
+          this.$$('#video').errorMessage = 'Please put proper youtube url';
+          this.$$('#video').invalid = true;
+          return;
+        }
+
+        var videoid = this._getYtId(youtubeurl);
+
+        var key = firebase.database().ref(this.interfacePath.videos).push().key;
+
+        var updates = {};
+
+        updates[this.interfacePath.videos + '/' + key + '/title'] = title;
+        updates[this.interfacePath.videos + '/' + key + '/videoId'] = videoid;
+
+        firebase.database().ref().update(updates).then(function() {
+          this._showMessage('Interface created');
+          this.$$('#add-dialog').close();
+        }.bind(this)).catch(this._catchError.bind(this))
+
+        
+      },
+
+      _getYtId: function(url) {
+        var ID = '';
+        url = url.replace(/(>|<)/gi,'').split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/)/);
+        if(url[2] !== undefined) {
+          ID = url[2].split(/[^0-9a-z_\-]/i);
+          ID = ID[0];
+        }
+        else {
+          ID = url;
+        }
+          return ID;
+      }
     });
   </script>
 </dom-module>

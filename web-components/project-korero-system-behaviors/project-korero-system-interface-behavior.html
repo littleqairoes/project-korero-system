@@ -1,0 +1,46 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="project-korero-system-utils-behavior.html">
+
+<script>
+  (function(){
+    'use strict';
+    /** @polymerBehavior KORERO.InterfaceBehavior */
+    KORERO.InterfaceBehaviorImpl = {
+
+      properties: {
+        interface: {
+          type: Object,
+          notify: true,
+          // value: function() { return null; },
+        },
+        
+        interfacePath: {
+          type: Object,
+          readOnly: true,
+          value: function() { return this._interfacePath; }
+        },
+        interfaceGroup: {
+          type: String,
+          readOnly: true,
+          value: function() { return this._interfaceGroup; }
+        },
+        
+      },
+      
+      get _interfaceGroup() {
+        return 'interfaceGroup';
+      },
+
+      get _interfacePath() {
+        // var roles = this._version + '/' + this._interfaceGroup + '/roles';
+        return {
+          videos: this._version + '/' + this._interfaceGroup + '/videos',                    
+        };
+      },
+    };
+    KORERO.InterfaceBehavior = [
+      KORERO.UtilsBehavior,
+      KORERO.InterfaceBehaviorImpl
+    ];
+  })();
+</script>

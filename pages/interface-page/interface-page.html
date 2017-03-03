@@ -2,6 +2,9 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/polymerfire/firebase-document.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/uniflow-polymer/action-emitter.html">
+<link rel="import" href="../../bower_components/uniflow-polymer/application-state.html">
+<link rel="import" href="../../web-components/project-korero-system-action-dispatcher/project-korero-system-action-dispatcher.html">
 <link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-user-behavior.html">
 <link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-interface-behavior.html">
 
@@ -16,15 +19,15 @@
       }
     </style>
 
-    
+    <project-korero-system-action-dispatcher state="{{state}}"></project-korero-system-action-dispatcher>
 
     <div class="horizontal layout">
       <template is="dom-if" if="showVideo">
         <div class="flex-4">
-        
+
         </div>
       </template>
-      
+
       <template is="dom-if" if="showDiscussion">
         <div class="flex">
 
@@ -39,7 +42,9 @@
 
       behaviors: [
         KORERO.UserBehavior,
-        KORERO.InterfaceBehavior
+        KORERO.InterfaceBehavior,
+        UniFlow.ActionEmitter,
+        UniFlow.ApplicationState,
       ],
 
       properties: {
@@ -53,9 +58,11 @@
         }
       },
 
-      behaviors: [
-
-      ]
+      ready() {
+        this.set('state', {
+          state: 'normal'
+        });
+      }
     });
   </script>
 </dom-module>

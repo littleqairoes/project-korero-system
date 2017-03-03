@@ -1,0 +1,17 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/uniflow-polymer/action-dispatcher.html">
+<link rel="import" href="../../bower_components/uniflow-polymer/action-emitter.html">
+
+<dom-module id="project-korero-system-action-dispatcher">
+  <script>
+    Polymer({
+      is: 'project-korero-system-action-dispatcher',
+
+      behaviors: [
+        UniFlow.ActionDispatcher,
+        UniFlow.ActionEmitter
+      ],
+
+    });
+  </script>
+</dom-module>

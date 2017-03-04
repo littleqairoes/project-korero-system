@@ -1,2 +1,29 @@
 //
 
+
+:host {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 78px);
+  overflow-y: auto;
+}
+
+.create-discussion-container {
+  width: 98%;
+  margin: 1%;
+  position: relative;
+
+  .create-discussion-div {
+    padding: 20px;
+    padding-top: 10px;
+  }
+}
+
+#create-discussion-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+}
+
+
+

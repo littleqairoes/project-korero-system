@@ -1,0 +1,48 @@
+<!-- Polymer dependencies -->
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/uniflow-polymer/action-emitter.html">
+<link rel="import" href="../../bower_components/uniflow-polymer/state-aware.html">
+<link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-utils-behavior.html">
+
+
+<!-- Style dependency -->
+<link rel="import" href="project-korero-system-video-style.html">
+
+<dom-module id="project-korero-system-video">
+  <template>
+    <style is="custom-style" include="project-korero-system-video-style iron-flex iron-flex-alignment iron-flex-factors">
+      :host {
+        display: block;
+      }
+    </style>
+
+    <div class="horizontal layout center">
+      <div class="flex">
+      </div>
+      <div class="flex-10" style="margin-top: 20px">
+
+      </div>
+      <div class="flex">
+      </div>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'project-korero-system-video',
+
+      properties: {
+        _createNode: {
+          type: Object
+        }
+      },
+
+      behaviors: [
+        KORERO.UtilsBehavior,
+        UniFlow.ActionEmitter,
+        UniFlow.StateAware
+      ],
+    });
+  </script>
+</dom-module>

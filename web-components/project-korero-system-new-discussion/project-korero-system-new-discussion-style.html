@@ -1,0 +1,53 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<dom-module id="project-korero-system-new-discussion-style">
+<template>
+<style>
+:host {
+  padding: 20px; }
+
+.new-discussion-time {
+  padding: 20px;
+  padding-bottom: 0px; }
+
+.new-discussion-container {
+  position: relative;
+  padding: 20px;
+  padding-top: 0px; }
+
+#body {
+  position: relative;
+  padding: 10px;
+  border: 1px solid black; }
+  #body .new-link {
+    background-color: yellow; }
+
+.toolbar {
+  position: absolute;
+  padding: 10px;
+  background-color: white;
+  z-index: 2000; }
+  .toolbar .medium-editor-toolbar-actions {
+    list-style-type: none;
+    padding-left: 0px;
+    margin-top: 0px; }
+    .toolbar .medium-editor-toolbar-actions li {
+      float: left; }
+      .toolbar .medium-editor-toolbar-actions li .medium-editor-action {
+        padding: 5px;
+        height: 40px;
+        width: 40px;
+        text-align: center;
+        background-color: white; }
+
+.toolbar-refer {
+  position: absolute;
+  padding: 10px;
+  background-color: white;
+  z-index: 2000; }
+
+.hidden {
+  display: none !important; }
+
+</style>
+</template>
+</dom-module>

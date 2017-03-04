@@ -7,13 +7,15 @@
 <link rel="import" href="../../web-components/project-korero-system-action-dispatcher/project-korero-system-action-dispatcher.html">
 <link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-user-behavior.html">
 <link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-interface-behavior.html">
+<link rel="import" href="../../web-components/project-korero-system-discussion/project-korero-system-discussion.html">
+<link rel="import" href="../../web-components/project-korero-system-activity/project-korero-system-activity.html">
 
 <!-- Style dependency -->
 <link rel="import" href="interface-page-style.html">
 
 <dom-module id="interface-page">
   <template>
-    <style is="custom-style" include="interface-page-style iron-flex iron-flex-alignment">
+    <style is="custom-style" include="interface-page-style iron-flex iron-flex-alignment iron-flex-factors">
       :host {
         display: block;
       }
@@ -23,15 +25,14 @@
 
     <div class="horizontal layout">
       <template is="dom-if" if="showVideo">
-        <div class="flex-4">
-
-        </div>
+        <project-korero-system-activity class="flex-3"></project-korero-system-activity>
       </template>
 
       <template is="dom-if" if="showDiscussion">
-        <div class="flex">
+        <project-korero-system-discussion class="flex"></project-korero-system-discussion>
+        <!--<div class="flex">
 
-        </div>
+        </div>-->
       </template>
     </div>
   </template>
@@ -55,12 +56,32 @@
         showDiscussion: {
           type: Boolean,
           value: false
-        }
+        },
       },
 
-      ready() {
+      observers: [
+        '_setInterfaceId(params.id)'
+      ],
+
+      _setInterfaceId: function(id) {
+        this.emitAction({type: KORERO.Actions.SET_INTERFACE_ID, id: id});
+      },
+
+      ready: function() {
         this.set('state', {
-          state: 'normal'
+          state: 'normal',
+          createDiscussion: false,
+          discussionToolbar: false,
+          referView: false,
+          newDiscussionObject: {
+            title: '',
+            text: '',
+            nodes: {},
+            videolink: false
+          },
+          ui: 'korero',
+          interfaceId: null
+          // interfaceId: this.params.id
         });
       }
     });

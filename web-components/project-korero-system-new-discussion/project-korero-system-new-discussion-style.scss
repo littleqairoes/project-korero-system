@@ -1,0 +1,59 @@
+//
+:host {
+  padding: 20px;
+}
+
+.new-discussion-time {
+  padding: 20px;
+  padding-bottom: 0px;
+}
+
+.new-discussion-container {
+  position: relative;
+  padding: 20px;
+  padding-top: 0px;
+}
+
+#body {
+  position: relative;
+  padding: 10px;
+  border: 1px solid black;
+
+  .new-link {
+    background-color: yellow;
+  }
+}
+
+.toolbar {
+  position: absolute;
+  padding: 10px;
+  background-color: white;
+  z-index: 2000;
+  .medium-editor-toolbar-actions {
+    list-style-type: none;
+    padding-left: 0px;
+    margin-top: 0px;
+    li {
+      float: left;
+      .medium-editor-action {
+        padding: 5px;
+        height: 40px;
+        width: 40px;
+        text-align: center;
+        background-color: white;
+      }
+    }
+  }
+}
+
+.toolbar-refer {
+  position: absolute;
+  padding: 10px;
+  background-color: white;
+  z-index: 2000;
+}
+
+.hidden {
+  display: none !important;
+}
+

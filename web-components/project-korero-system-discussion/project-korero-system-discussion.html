@@ -1,25 +1,72 @@
 <!-- Polymer dependencies -->
 <link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/uniflow-polymer/action-emitter.html">
+<link rel="import" href="../../bower_components/uniflow-polymer/state-aware.html">
+<link rel="import" href="../../bower_components/medium-editor-element/medium-editor-element.html">
+<link rel="import" href="../../web-components/project-korero-system-new-discussion/project-korero-system-new-discussion.html">
+<link rel="import" href="../../web-components/project-korero-system-icons/project-korero-system-icons.html">
+<link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-utils-behavior.html">
+
+<link rel="import" href="project-korero-system-discussion-scripts.html">
 
 <!-- Style dependency -->
 <link rel="import" href="project-korero-system-discussion-style.html">
 
 <dom-module id="project-korero-system-discussion">
   <template>
-    <style is="custom-style" include="project-korero-system-discussion-style">
+    <style is="custom-style" include="project-korero-system-discussion-style iron-flex iron-flex-alignment">
       :host {
         display: block;
       }
     </style>
 
 
+
+    <paper-material class="create-discussion-container" id="create-discussion-container">
+      <template is="dom-if" if="[[state.createDiscussion]]">
+        <project-korero-system-new-discussion id="new-discussion-block"></project-korero-system-new-discussion>
+      </template>
+    </paper-material>
+
+    <paper-fab
+      id="create-discussion-button"
+      icon="default:chat"
+      on-tap="_openCreateDiscussion">
+    </paper-fab>
   </template>
 
   <script>
     Polymer({
       is: 'project-korero-system-discussion',
 
+      properties: {
+        _createNode: {
+          type: Object
+        }
+      },
 
+      behaviors: [
+        KORERO.UtilsBehavior,
+        UniFlow.ActionEmitter,
+        UniFlow.StateAware
+      ],
+
+      _openCreateDiscussion: function() {
+        this.emitAction({type: KORERO.Actions.OPEN_CREATE_DISCUSSION});
+        Polymer.RenderStatus.afterNextRender(this, function() {
+          this.$$('#new-discussion-block').newDiscussion();
+        }.bind(this))
+      },
+
+      _hideContainer: function(state) {
+        return !state ? 'hidden' : '';
+      }
     });
   </script>
 </dom-module>

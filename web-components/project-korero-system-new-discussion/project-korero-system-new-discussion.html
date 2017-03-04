@@ -1,0 +1,240 @@
+<!-- Polymer dependencies -->
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/uniflow-polymer/action-emitter.html">
+<link rel="import" href="../../bower_components/uniflow-polymer/state-aware.html">
+<link rel="import" href="../../bower_components/medium-editor-element/medium-editor-element.html">
+<link rel="import" href="../../web-components/project-korero-system-icons/project-korero-system-icons.html">
+<link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-utils-behavior.html">
+
+<!-- Style dependency -->
+<link rel="import" href="project-korero-system-new-discussion-style.html">
+
+<dom-module id="project-korero-system-new-discussion">
+  <template>
+    <style is="custom-style" include="project-korero-system-new-discussion-style iron-flex iron-flex-alignment">
+      :host {
+        display: block;
+      }
+    </style>
+    <paper-material>
+      <div class="new-discussion-time">
+        <template is="dom-if" if="{{!state.discussion.videolink}}">
+          Global: <iron-icon icon="default:language"></iron-icon>
+        </template>
+        <template is="dom-if" if="{{state.discussion.videolink}}">
+          Specific: <iron-icon icon="default:radio-button-checked"></iron-icon> [[_timeToString(discussion.start)]] - [[_timeToString(discussion.end)]]
+        </template>
+      </div>
+
+      <div class="new-discussion-container">
+
+        <paper-material class$="toolbar [[_hideContainer(state.discussionToolbar)]]" elevation="2"></paper-material>
+        <paper-material class$="toolbar-refer [[_hideContainer(state.referView)]]" elevation="2">
+          <b>Reference this term to:</b><br/>
+          <template is="dom-if" if="{{isKorero(state.ui)}}">
+            <paper-button raised>This Lecture Video</paper-button><br/>
+          </template>
+          <!--<paper-button raised>Other Course Materials</paper-button><br/>-->
+          <paper-input label="Link other PDF materials" accept="application/pdf" id="external" type="file"></paper-input>
+          <paper-button raised on-tap="_createLink">Upload Materials</paper-button><br/>
+        </paper-material>
+
+        <paper-input label="Thread title here..." id="title"></paper-input>
+
+        <div id="body" on-tap="_commentChange" on-track="_commentChange" on-keydown="_commentChange">
+          This is a text
+        </div>
+
+        <div class="buttons">
+          <paper-button raised on-tap="cancel">
+            Cancel
+          </paper-button>
+          <paper-button raised on-tap="post">
+            Post
+          </paper-button>
+        </div>
+      </div>
+
+
+
+    </paper-material>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'project-korero-system-new-discussion',
+
+      properties: {
+        _createNode: {
+          type: Object
+        }
+      },
+
+      behaviors: [
+        KORERO.UtilsBehavior,
+        UniFlow.ActionEmitter,
+        UniFlow.StateAware
+      ],
+
+      attached: function() {
+        var el = this.$$('#body');
+
+        var buttons = ['bold', 'italic', 'underline', 'refer-extension'];
+        var referExtension = this._referExtension();
+
+        var options = {
+          autoLink: true,
+          toolbar: {
+            /* These are the default options for the toolbar,
+              if nothing is passed this is what is used */
+            allowMultiParagraphSelection: true,
+            buttons: buttons,
+          },
+          extensions: {
+            'refer-extension': new referExtension()
+          }
+        }
+
+        this._editor = new MediumEditor(el, options);
+
+        var editorAnchor = window.document.getElementById('medium-editor-anchor-preview-1');
+        var editorToolbar = window.document.getElementById('medium-editor-toolbar-1');
+        this.$$('.toolbar').appendChild(editorAnchor);
+        this.$$('.toolbar').appendChild(editorToolbar);
+      },
+
+      _editor: null,
+
+      _referExtension: function() {
+        var self = this;
+        return MediumEditor.Extension.extend({
+          name: 'refer-extension',
+
+          init: function () {
+            this.button = this.document.createElement('button');
+            this.button.classList.add('medium-editor-action');
+            this.button.innerHTML = '<iron-icon icon="default:insert-drive-file"></iron-icon>';
+            this.on(this.button, 'click', this.handleClick.bind(this));
+          },
+
+          getButton: function () {
+            return this.button;
+          },
+
+          handleClick: function(event) {
+            // console.log(self.state.discusssionSelected);
+            // console.log(self.state.discussionSelected.text)
+            self._refer();
+          }
+        })
+      },
+
+      _refer: function() {
+        var selected = this.state.discussionSelected;
+        if (selected && selected.text && selected.text.length > 0) {
+          var id = 'discussion-link-' + chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 10});
+          var text = selected.text;
+          this._editor.pasteHTML('<mark id=' + id + '>' + text + '</mark>&#8203;');
+          this.$$('#' + id).classList.add('new-discussion-link');
+          this.emitAction({
+            type: KORERO.Actions.SET_NEW_DISCUSSION_LINKS,
+            id: id
+          });
+        }
+      },
+
+      _checkNodeForCancel: function() {
+        if (this.createNode) {
+          var data = JSON.parse(this.createNode.getAttribute('data-hover'));
+          if (!data || (data && (!data.length || data.length === 0 ))) {
+            this.selected.range.deleteContents();
+            this.selected.range.insertNode(document.createTextNode(this.createNode.innerHTML));
+            this.selected = null;
+            this.createNode = null;
+          } else {
+            this.exitBottom();
+          }
+        }
+      },
+
+      newDiscussion: function() {
+        this.$$('#title').value = '';
+        this._editor.setContent('', 0);
+      },
+
+      _commentChange: function() {
+        this.emitAction({
+          type: KORERO.Actions.SET_SELECTION,
+          discussionSelected: this.showSelectionDiv()
+        });
+        this._openHoverOptions();
+      },
+
+      _openCreateDiscussion: function() {
+        this.emitAction({type: KORERO.Actions.OPEN_CREATE_DISCUSSION});
+      },
+
+      _openHoverOptions: function(flag) {
+        var selected = this.state.discussionSelected;
+
+        if (selected && selected.text && selected.text.length > 0) {
+          this.emitAction({type: KORERO.Actions.CLOSE_BOTTOM});
+          var elRect = this.$$('.new-discussion-container').getBoundingClientRect();
+          var top = (selected.pos.top - elRect.top) + selected.pos.height;
+          var left = (selected.pos.left) - elRect.left;
+          if (elRect.width - left < 200) {
+            left = elRect.width - 200;
+          }
+          this.$$('.toolbar').setAttribute('style', `top: ${top}px; left: ${left}px`);
+          this.$$('.toolbar-refer').setAttribute('style', `top: ${top}px; left: ${left}px`);
+          if (flag) this._refer();
+        } else {
+          this.emitAction({type: KORERO.Actions.CLOSE_DISCUSSION_TOOLBAR});
+          this.emitAction({type: KORERO.Actions.CLOSE_REFER_VIEW});
+        }
+
+      },
+
+      _createLink: function() {
+        if (this.state.ui === 'korero') {
+          KORERO.Elements.Template.$.toast.showMessage('Uploading...');
+          this.emitAction({type: KORERO.Actions.OPEN_VIEW_EDIT_ACTIVITY});
+          var file = this.$$('#external').inputElement.files[0];
+
+          var task = firebase.storage().ref('docs/'+ this.state.interfaceId +'/'+file.name).put(file);
+          task.on('state_changed', function(snapshot){
+
+          }, this._catchError.bind(this), function() {
+            KORERO.Elements.Template.$.toast.showMessage('Uploading done');
+            PDFJS.getDocument(task.snapshot.downloadURL).then(function(pdf) {
+              this.emitAction({type: KORERO.Actions.OPEN_VIEW_EDIT_ACTIVITY, data: {
+                pdf: pdf,
+                file: task.snapshot.downloadURL
+              }}).catch(this._catchError.bind(this));
+              this.$$('#external').inputElement.value = '';
+              this.emitAction({type: KORERO.Actions.CLOSE_DISCUSSION_TOOLBAR});
+              this.emitAction({type: KORERO.Actions.CLOSE_REFER_VIEW});
+            }.bind(this))
+            // console.log();
+          })
+        } else {
+          this.emitAction({type: KORERO.Actions.CLOSE_DISCUSSION_TOOLBAR});
+          this.emitAction({type: KORERO.Actions.CLOSE_REFER_VIEW});
+        }
+      },
+
+      cancel: function() {
+        // this.emitAction({type})
+      },
+
+      _hideContainer: function(state) {
+        return !state ? 'hidden' : '';
+      }
+    });
+  </script>
+</dom-module>

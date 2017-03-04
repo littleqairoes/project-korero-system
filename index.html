@@ -117,7 +117,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       window.loadRaven = function() {
-        Raven.config('https://827acc4cd4d04b009157881a6939baac@sentry.io/123192').install();
+        Raven.config('https://827acc4cd4d04b009157881a6939baac@sentry.io/123192', {
+          autoBreadcrumbs: {
+            console: false
+          }
+        }).install();
         setTimeout(sendRavenMessages, 10);
       }
     </script>
@@ -244,6 +248,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         padding: 20px;
       }
     </style>
+
+    <link rel="stylesheet" href="/bower_components/medium-editor/dist/css/medium-editor.css">
+    <link rel="stylesheet" href="/bower_components/medium-editor/dist/css/themes/default.css">
+    <link rel="import" href="/bower_components/medium-editor-element/medium-editor-element.html">
   </head>
   <body>
 
@@ -259,6 +267,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <project-korero-system-app-shell id="core-app"></project-korero-system-app-shell>
 
+    <!--<medium-editor ></medium-editor>-->
+
+    <!--<div id="body">
+      Text edit here
+    </div>-->
+
     <script>
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -268,6 +282,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ga('create', 'UA-89151399-1', 'auto');
       ga('send', 'pageview');
 
+      // setTimeout(function() {
+      //   var editor = new MediumEditor('#body')
+      // }, 1000);
     </script>
 
     <script src="/scripts/util.js"></script>

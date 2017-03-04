@@ -12,6 +12,76 @@
         UniFlow.ActionEmitter
       ],
 
+      _createNewDiscussion: function() {
+        this.set('state.newDiscussion', {
+          title: '',
+          text: '',
+          links: {}
+        })
+      },
+
+      [KORERO.Actions.SET_INTERFACE_ID](details) {
+        this.set('state.interfaceId', details.id);
+      },
+
+      [KORERO.Actions.OPEN_CREATE_DISCUSSION](details) {
+        this.set('state.createDiscussion', true);
+        this.set('state.newDiscussionObject.title', '');
+        this.set('state.newDiscussionObject.text', '');
+        this.set('state.newDiscussionObject.nodes', {});
+        this.set('state.newDiscussionObject.videolink', false);
+      },
+
+      [KORERO.Actions.CLOSE_CREATE_DISCUSSION](details) {
+        this.set('state.createDiscussion', false);
+        this.set('state.discussionToolbar', false);
+      },
+
+      [KORERO.Actions.CLOSE_DISCUSSION_TOOLBAR](details) {
+        this.set('state.discussionToolbar', false);
+      },
+
+      [KORERO.Actions.CLOSE_REFER_VIEW](details) {
+        this.set('state.referView', false);
+      },
+
+      [KORERO.Actions.SET_SELECTION](details) {
+        this.set('state.discussionSelected', details.discussionSelected)
+        if (details.discussionSelected && details.discussionSelected.text && details.discussionSelected.text.length > 0) {
+          this.set('state.discussionToolbar', true);
+        } else {
+          this.set('state.discussionToolbar', false)
+        }
+      },
+
+      [KORERO.Actions.SET_NEW_DISCUSSION](details) {
+        this._createNewDiscussion();
+      },
+
+      [KORERO.Actions.SET_NEW_DISCUSSION_LINKS](details) {
+        if (!this.state.newDiscussion) {
+          this._createNewDiscussion();
+        }
+        this.set('state.newDiscussion.links.' + details.id, {});
+        this.set('state.discussionToolbar', false);
+        this.set('state.referView', true)
+      },
+
+      [KORERO.Actions.OPEN_VIEW_EDIT_ACTIVITY](details) {
+        this.set('state.viewEditActivity', true);
+        if (details.data) {
+
+        }
+      },
+
+      [KORERO.Actions.CLOSE_VIEW_EDIT_ACTIVITY](details) {
+        this.set('state.viewEditActivity', false);
+      },
+
+      [KORERO.Actions.CLOSE_BOTTOM](details) {
+        this.set('state.openBottom', null);
+      }
+
     });
   </script>
 </dom-module>

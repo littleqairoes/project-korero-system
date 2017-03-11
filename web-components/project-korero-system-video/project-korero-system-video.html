@@ -3,7 +3,12 @@
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../../bower_components/uniflow-polymer/action-emitter.html">
 <link rel="import" href="../../bower_components/uniflow-polymer/state-aware.html">
+<link rel="import" href="../../bower_components/google-youtube/google-youtube.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/polymerfire/firebase-document.html">
+<link rel="import" href="../../web-components/project-korero-system-icons/project-korero-system-icons.html">
 <link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-utils-behavior.html">
+<link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-interface-behavior.html">
 
 
 <!-- Style dependency -->
@@ -17,15 +22,112 @@
       }
     </style>
 
-    <div class="horizontal layout center">
-      <div class="flex">
-      </div>
-      <div class="flex-10" style="margin-top: 20px">
+    <firebase-document path="[[interfacePath.videos]]/[[state.interfaceId]]" data="{{video}}"></firebase-document>
 
+      <div class="container" id="container-panel">
+        <div class="horizontal layout center">
+          <div class="flex" id="container-video">
+            <google-youtube
+                width="100%"
+                id="video-content"
+                video-id="[[video.videoId]]"
+                chromeless
+                on-google-youtube-ready="_videoReady"
+                on-goolge-youtube-state-change="_stateChange"
+                currenttime="{{videotime}}"
+                duration="{{videoduration}}"
+                currenttimeformatted="{{videoShowTime}}"></google-youtube>
+
+            <div class="horizontal layout center" id="video-content-player-area">
+
+              <paper-icon-button icon="default:play-circle-outline" on-tap="_play"></paper-icon-button>
+              <paper-icon-button icon="default:pause-circle-outline" on-tap="_pause"></paper-icon-button>
+
+              <div class="flex scrubber-area" on-down="_scrub" on-track="_scrub" id="video-scrubber-area">
+                <div class="scrubber-grey">
+                  <div id="video-play-time"></div>
+
+                  <template is="dom-if" if="[[_checkGeneral(state.linkTime.start, state.linkingEdit)]]">
+                    <div class="linker-play-time"></div>
+                  </template>
+
+                  <div id="linking-play-time"></div>
+                  <div id="show-linking-play-time"></div>
+                  <div id="discussion-play-time"></div>
+                  <div id="comment-play-time"></div>
+                  <div id="specific-play-time"></div>
+
+                  <template is="dom-if" if="[[visualstart]]">
+                    <div id="start-play-time">
+                      [[visualstart]]
+                    </div>
+                  </template>
+                  <template is="dom-if" if="[[visualend]]">
+                    <div id="end-play-time">
+                      [[visualend]]
+                    </div>
+                  </template>
+                </div>
+
+                <google-youtube
+                  width="160px"
+                  height="90px"
+                  id="video-thumbnail"
+                  video-id="[[video.videoId]]"
+                  chromeless
+                  on-google-youtube-ready="_videoThumbnailReady">
+                </google-youtube>
+              </div>
+
+              <div class="video-show-time">
+                {{videoShowTime}}
+              </div>
+            </div>
+
+            <template is="dom-if" if="{{state.linking}}">
+              <div class="horizontal layout">
+                <div class="flex"></div>
+
+                <template is="dom-if" if="{{state.linkingEdit}}">
+                  <paper-icon-button
+                    id="linking-ok"
+                    icon="default:check"
+                    on-tap="_saveLinking"></paper-icon-button>
+                </template>
+
+                <paper-icon-button
+                  id="linking-cancel"
+                  icon="default:close"
+                  on-tap="_cancelLinking"></paper-icon-button>
+
+                <template is="dom-if" if="{{state.linkingEdit}}">
+                  <paper-button
+                    on-tap="addSegment">
+                    + Add one more segment
+                  </paper-button>
+                </template>
+
+                <div class="flex"></div>
+              </div>
+            </template>
+
+            <template is="dom-if" if="{{state.playspecific}}">
+              <div class="horizontal layout">
+                <div class="flex"></div>
+
+                <paper-icon-button
+                  id="specific-cancel"
+                  icon="deafult:close"
+                  on-tap="_cancelSpecific"></paper-icon-button>
+
+                <div class="flex"></div>
+              </div>
+            </template>
+          </div>
+        </div>
       </div>
-      <div class="flex">
-      </div>
-    </div>
+    <!--</template>-->
+
   </template>
 
   <script>
@@ -33,16 +135,278 @@
       is: 'project-korero-system-video',
 
       properties: {
-        _createNode: {
+        videotime: {
+          type: Number,
+          value: 0,
+          observer: "_changeVideoTime"
+        },
+        videoduration: {
+          type: Number,
+          value: 0
+        },
+        videoShowTime: {
+          type: String
+        },
+        visualstart: {
+          type: String
+        },
+        visualend: {
+          type: String
+        },
+        videoLoaded: {
+          type: Boolean
+        },
+        canvas: {
           type: Object
         }
       },
 
       behaviors: [
         KORERO.UtilsBehavior,
+        KORERO.InterfaceBehavior,
         UniFlow.ActionEmitter,
         UniFlow.StateAware
       ],
+
+      observers: [
+        '_newDiscussion(state.createDiscussion)'
+      ],
+
+      _resizeBind: null,
+
+      attached: function() {
+        this._resize();
+        this._resizeBind = this._resizeBind || this._resize.bind(this);
+        window.addEventListener('resize', this._resizeBind);
+      },
+
+      detached: function() {
+        window.removeEventListener('resize', this._resizeBind);
+      },
+
+      _resize: function() {
+        var height = ((this.$$('#video-content').getBoundingClientRect().width * 9) / 16)
+        this.$$('#video-content').setAttribute('height', `${height}px`);
+      },
+
+      _play: function() {
+        this.$$('#video-content').play()
+      },
+
+      _pause: function() {
+        this.$$('#video-content').pause()
+      },
+
+      _scrub: function(e) {
+        e.preventDefault();
+        var el = this.$$('#video-scrubber-area');
+        var elRect = el.getBoundingClientRect();
+        var scrubPos = (e.detail.x - elRect.left) / elRect.width
+        scrubPos = scrubPos <= 0 ? 0 : scrubPos;
+        scrubPos = scrubPos >= 1 ? 1 : scrubPos;
+        this.$$('#video-thumbnail').setAttribute('style', `display: block; left: ${scrubPos * 100}%; top: -105px`);
+
+        var time = this.videoduration * scrubPos
+        this.$$('#video-thumbnail').seekTo(time);
+        this.$$('#video-thumbnail').play();
+
+        if (this.state.linking) {
+          this.emitAction({
+            type: KORERO.Actions.SET_LINK_TIME,
+            time: time
+          });
+
+          this.visualstart = this._timeToString(this.state.linkTime.start);
+          this.visualend = this._timeToString(this.state.linkTime.end);
+          this._changeLinkVideoTIme();
+          this.$$('#video-content').seekTo(this.state.linkTime.start);
+        } else if (this.state.discussionLink) {
+          this.emitAction({
+            type: KORERO.Actions.SET_DISCUSSION_TIME,
+            time: time
+          });
+          this.visualstart = this._timeToString(this.state.discussionTime.start);
+          this.visualend = this._timeToString(this.state.discussionTime.end);
+          this._changeDiscussionTime();
+          this.$$('#video-content').seekTo(this.state.discussionTime.start);
+        } else if (this.state.commentLink) {
+          this.emitAction({
+            type: KORERO.Actions.SET_COMMENT_TIME,
+            time: time
+          });
+          this.visualstart = this._timeToString(this.state.commentTime.start);
+          this.visualend = this._timeToString(this.state.commentTime.start);
+          this._changeCommentTime();
+          this.$$('#video-content').seekTo(this.state.commentTime.start);
+        } else {
+          this._changeVideoTime(time);
+          this.$$('#video-content').seekTo(this.videoduration != 1 ? this.videoduration * scrubPos : 0);
+        }
+
+        Polymer.debounce('close-thumbnail-video', this._closeThumbnailVideo.bind(this), 1000);
+
+      },
+
+      _closeThumbnailVideo: function() {
+        this.$$('#video-thumbnail').pause();
+        this.$$('#video-thumbnail').setAttribute('style', 'display: none');
+      },
+
+
+      _videoReady: function(e) {
+        this._resize();
+        this._play();
+      },
+
+      _videoThumbnailReady: function() {
+        // this.$$('#video-thumbnail').setPlaybackQuality('tiny');
+        this.$$('#video-thumbnail').play();
+        this.$$('#video-thumbnail').mute();
+      },
+
+      _stateChange: function(e) {
+        if (!this.videoLoaded && e.detail.data) {
+          this.videoLoaded = true;
+        }
+        if (e.detail.data === 1 && this.playspecific) {
+          this._changeSpecificTime();
+        }
+      },
+
+      _changeVideoTime: function(time) {
+        var elPlayTime = this.$$('#video-play-time');
+
+        if (!elPlayTime) {
+          return;
+        }
+        elPlayTime.setAttribute('style', `width: ${(time/this.videoduration)*100}%`);
+        // console.log(this.linking, this.showLinkingFlag)
+
+        if (this.state) {
+          if (this.state.linking) {
+            if (time >= this.state.linkTime.end) {
+              this.$$('#video-content').seekTo(this.state.linkTime.start);
+              this.play();
+            } else if (time < this.state.linkTime.start) {
+              this.$$('#video-content').seekTo(this.state.linkTime.start);
+              this.play();
+            }
+          } else if (this.state.discussionLink) {
+            if (time >= this.state.discussionTime.end) {
+              this.$$('#video-content').seekTo(this.state.discussionTime.start);
+              this.play();
+            } else if (time < this.state.discussionTime.start) {
+              this.$$('#video-content').seekTo(this.state.discussionTime.start);
+              this.play();
+            }
+          } else if (this.state.playspecific) {
+            if (this.state.playTime.start != null || this.state.playTime.start != undefined)  {
+              if (time >= this.state.playTime.end) {
+                this.$$('#video-content').seekTo(this.state.playTime.start);
+                this.play();
+              } else if (time < this.state.playTime.start) {
+                this.$$('#video-content').seekTo(this.state.playTime.start);
+                this.play();
+              }
+            } else if (time < 0 || time >= this.videoduration){
+              this.$$('#video-content').seekTo(0);
+              this.play();
+            }
+          } else if (this.state.showLinkingFlag) {
+            if (this.state.showLinkingTime.start != null || this.state.showLinkingTime.start != undefined) {
+              if (time >= this.state.showLinkingTime.end) {
+                this.$$('#video-content').seekTo(this.state.showLinkingTime.start);
+                this.play();
+              } else if (time < this.state.showLinkingTime.start) {
+                this.$$('#video-content').seekTo(this.state.showLinkingTime.start);
+                this.play();
+              }
+            } else if (time < 0 || time >= this.videoduration){
+              this.$$('#video-content').seekTo(0);
+              this.play();
+            }
+          }
+        }
+
+      },
+
+      _changeLinkVideoTime: function() {
+        var elPlayTime = this.$$('#linking-play-time');
+        elPlayTime.setAttribute('style', `left: ${(this.state.linkTime.start/this.videoduration)*100}%; width: ${((this.state.linkTime.end - this.state.linkTime.start)/this.videoduration)*100}%`);
+        Polymer.async(function() {
+          this.$$('#start-play-time').setAttribute('style', `left: ${(this.state.linkTime.start/this.videoduration)*100}%;`);
+          this.$$('#end-play-time').setAttribute('style', `left: ${(this.state.linkTime.end/this.videoduration)*100}%`);
+        }.bind(this), 100)
+      },
+
+      _changeShowLinkVideoTime: function() {
+        var elPlayTime = this.$$('#linking-play-time');
+        elPlayTime.setAttribute('style', `left: ${(this.state.showLinkingTime.start/this.videoduration)*100}%; width: ${((this.state.showLinkingTime.end - this.state.showLinkingTime.start)/this.videoduration)*100}%`);
+        Polymer.async(function(){
+          if (this.$$('#start-play-time')) this.$$('#start-play-time').setAttribute('style', `left: ${(this.state.showLinkingTime.start/this.videoduration)*100}%;`);
+          if (this.$$('#end-play-time')) this.$$('#end-play-time').setAttribute('style', `left: ${(this.state.showLinkingTime.end/this.videoduration)*100}%`);
+        }.bind(this), 100)
+      },
+
+      _changeDiscussionTime: function() {
+        var elPlayTime = this.$$('#discussion-play-time');
+        elPlayTime.setAttribute('style', `left: ${(this.state.discussionTime.start/this.videoduration)*100}%; width: ${((this.state.discussionTime.end - this.state.discussionTime.start)/this.videoduration)*100}%`);
+
+        // firing it back to discussion, which is handled already by uniflow
+        // this.fire('change-discussion-time', {discussionstart: this.discussionstart, discussionend: this.discussionend});
+
+        Polymer.async(function(){
+          this.$$('#start-play-time').setAttribute('style', `left: ${(this.state.discussionTime.start/this.videoduration)*100}%`);
+          this.$$('#end-play-time').setAttribute('style', `left: ${(this.state.discussionTime.end/this.videoduration)*100}%`);
+        }.bind(this), 100)
+      },
+
+      _changeCommentTime: function() {
+        var elPlayTime = this.$$('#comment-play-time');
+        elPlayTime.setAttribute('style', `left: ${(this.start.commentTime.start/this.videoduration)*100}%; width: ${((this.start.commentTime.end - this.start.commentTime.start)/this.videoduration)*100}%`);
+
+        // this.fire('change-comment-time', {discussionid: this.commentdiscussionid , commentstart: this.commentstart, commentend: this.commentend});
+
+        Polymer.async(function(){
+          this.$$('#start-play-time').setAttribute('style', `left: ${(this.start.commentTime.start/this.videoduration)*100}%`);
+          this.$$('#end-play-time').setAttribute('style', `left: ${(this.start.commentTime.end/this.videoduration)*100}%`);
+        }.bind(this), 100)
+      },
+
+      _changeSpecificTime: function() {
+        var elPlayTime = this.$$('#specific-play-time');
+        elPlayTime.setAttribute('style', `left: ${(this.state.playTime.start/this.videoduration)*100}%; width: ${((this.state.playTime.end - this.state.playTime.start)/this.videoduration)*100}%`);
+      },
+
+      // check first
+      _setCanvas: function(boxes, editable) {
+
+      },
+
+      _newDiscussion: function(flag) {
+        if (flag) {
+          this.pause();
+
+          this.emitAction({
+            type: KORERO.Actions.SET_DISCUSSION_LINK_FLAG,
+            flag: true
+          });
+
+          this.emitAction({
+            type: KORERO.Actions.SET_DISCUSSION_TIME,
+            time: this.videotime
+          });
+
+          if (this.state.ui === 'adi') {
+            this.visualstart = this.timeToString(this.state.discussionTime.start);
+            this.visualend = this.timeToString(this.state.discussionTime.end);
+            this._changeDiscussionTime();
+            this.$$('#video-content').seekTo(this.state.discussionTime.start);
+          }
+        }
+      }
+
+
     });
   </script>
 </dom-module>

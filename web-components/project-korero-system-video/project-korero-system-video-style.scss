@@ -1,1 +1,121 @@
 //
+#container-video {
+  position: relative;
+}
+
+#canvas {
+  position: absolute;
+  top: 0px;
+}
+
+.video-show-time {
+  margin: 8px;
+  width: 50px;
+  text-align: center;
+}
+
+.scrubber-area {
+  margin-left: 8px;
+  margin-right: 8px;
+  height: 40px;
+  position: relative;
+  cursor: pointer;
+}
+
+.scrubber-grey {
+  margin-top: 17px;
+  height: 5px;
+  background-color: #AAA;
+  position: relative;
+}
+
+#video-play-time {
+  height: 5px;
+  position: relative;
+  background-color: red;
+  width: 0px;
+  opacity: 0.5;
+}
+
+#linking-play-time {
+  height: 5px;
+  position: absolute;
+  background-color: blue;
+  width: 0px;
+  top: 0px;
+  opacity: 0.5;
+}
+
+#show-linking-play-time {
+  height: 5px;
+  position: absolute;
+  background-color: blue;
+  width: 0px;
+  top: 0px;
+  opacity: 0.5;
+}
+
+#linker-play-time {
+  height: 5px;
+  position: absolute;
+  background-color: blue;
+  width: 0%;
+  top: 0px;
+  opacity: 0.5;
+}
+
+#discussion-play-time {
+  height: 5px;
+  position: absolute;
+  background-color: green;
+  width: 0px;
+  top: 0px;
+  opacity: 0.5;
+}
+
+#comment-play-time {
+  height: 5px;
+  position: absolute;
+  background-color: green;
+  width: 0px;
+  top: 0px;
+  opacity: 0.5;
+}
+
+#specific-play-time {
+  height: 5px;
+  position: absolute;
+  background-color: blue;
+  width: 0px;
+  top: 0px;
+  opacity: 0.7;
+}
+
+#video-content {
+  min-width: 320px;
+  max-width: 1000px;
+}
+
+#video-content-player-area {
+  min-width: 320px;
+  max-width: 1000px;
+}
+
+#start-play-time, #end-play-time {
+  position: absolute;
+  font-size: 0.7em;
+}
+
+#start-play-time {
+  top: -15px;
+}
+
+#video-thumbnail {
+  position: absolute;
+  display: none;
+}
+
+#canvas {
+  position: absolute;
+  top: 0px;
+}

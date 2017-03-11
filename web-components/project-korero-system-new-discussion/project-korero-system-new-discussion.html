@@ -141,10 +141,12 @@
           var text = selected.text;
           this._editor.pasteHTML('<mark id=' + id + '>' + text + '</mark>&#8203;');
           this.$$('#' + id).classList.add('new-discussion-link');
-          this.emitAction({
-            type: KORERO.Actions.SET_NEW_DISCUSSION_LINKS,
-            id: id
-          });
+
+
+          // this.emitAction({
+          //   type: KORERO.Actions.SET_NEW_DISCUSSION_LINKS,
+          //   id: id
+          // });
         }
       },
 
@@ -173,10 +175,6 @@
           discussionSelected: this.showSelectionDiv()
         });
         this._openHoverOptions();
-      },
-
-      _openCreateDiscussion: function() {
-        this.emitAction({type: KORERO.Actions.OPEN_CREATE_DISCUSSION});
       },
 
       _openHoverOptions: function(flag) {

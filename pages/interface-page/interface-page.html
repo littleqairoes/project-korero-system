@@ -70,9 +70,12 @@
       ready: function() {
         this.set('state', {
           state: 'normal',
-          createDiscussion: false,
+
           discussionToolbar: false,
           referView: false,
+
+          // Discussion
+          createDiscussion: false,
           newDiscussionObject: {
             title: '',
             text: '',
@@ -80,7 +83,43 @@
             videolink: false
           },
           ui: 'korero',
-          interfaceId: null
+          interfaceId: null,
+
+          // linking states
+          linking: false,
+          linkingEdit: false,
+          linkTime: {
+            start: null,
+            end: null
+          },
+
+          // discussion states
+          discussionLink: false,
+          discussionTime: {
+            start: null,
+            end: null
+          },
+
+          // comment states
+          commentLink: false,
+          commentTime: {
+            start: null,
+            end: null
+          },
+
+          // play specific states
+          playspecific: false,
+          playTime: {
+            start: null,
+            end: null
+          },
+
+          // show linking states
+          showLinkingFlag: false,
+          showLinkingTime: {
+            start: null,
+            end: null
+          }
           // interfaceId: this.params.id
         });
       }

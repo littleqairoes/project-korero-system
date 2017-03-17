@@ -37,7 +37,7 @@
         <paper-material class$="toolbar-refer [[_hideContainer(state.referView)]]" elevation="2">
           <b>Reference this term to:</b><br/>
           <template is="dom-if" if="{{isKorero(state.ui)}}">
-            <paper-button raised>This Lecture Video</paper-button><br/>
+            <paper-button raised on-tap="_linkvideo">This Lecture Video</paper-button><br/>
           </template>
           <!--<paper-button raised>Other Course Materials</paper-button><br/>-->
           <paper-input label="Link other PDF materials" accept="application/pdf" id="external" type="file"></paper-input>
@@ -79,6 +79,10 @@
         KORERO.UtilsBehavior,
         UniFlow.ActionEmitter,
         UniFlow.StateAware
+      ],
+
+      observers: [
+        '_saveLinking(state.saveLinking, state.discussionId)'
       ],
 
       attached: function() {
@@ -142,11 +146,8 @@
           this._editor.pasteHTML('<mark id=' + id + '>' + text + '</mark>&#8203;');
           this.$$('#' + id).classList.add('new-discussion-link');
 
-
-          // this.emitAction({
-          //   type: KORERO.Actions.SET_NEW_DISCUSSION_LINKS,
-          //   id: id
-          // });
+          this.emitAction({type: KORERO.Actions.SET_REFER_VIEW, referView: true});
+          this.emitAction({type: KORERO.Actions.SET_NEW_DISCUSSION_LINKS, id: id})
         }
       },
 
@@ -193,7 +194,7 @@
           if (flag) this._refer();
         } else {
           this.emitAction({type: KORERO.Actions.CLOSE_DISCUSSION_TOOLBAR});
-          this.emitAction({type: KORERO.Actions.CLOSE_REFER_VIEW});
+          this.emitAction({type: KORERO.Actions.SET_REFER_VIEW, referView: false});
         }
 
       },
@@ -216,13 +217,13 @@
               }}).catch(this._catchError.bind(this));
               this.$$('#external').inputElement.value = '';
               this.emitAction({type: KORERO.Actions.CLOSE_DISCUSSION_TOOLBAR});
-              this.emitAction({type: KORERO.Actions.CLOSE_REFER_VIEW});
+              this.emitAction({type: KORERO.Actions.SET_REFER_VIEW, referView: false});
             }.bind(this))
             // console.log();
           })
         } else {
           this.emitAction({type: KORERO.Actions.CLOSE_DISCUSSION_TOOLBAR});
-          this.emitAction({type: KORERO.Actions.CLOSE_REFER_VIEW});
+          this.emitAction({type: KORERO.Actions.SET_REFER_VIEW, referView: false});
         }
       },
 
@@ -232,6 +233,70 @@
 
       _hideContainer: function(state) {
         return !state ? 'hidden' : '';
+      },
+
+      _linkvideo: function() {
+        this.emitAction({
+          type: KORERO.Actions.SET_LINKING,
+          flag: true
+        })
+
+        this.emitAction({
+          type: KORERO.Actions.SET_LINKING_EDIT,
+          flag: true
+        })
+
+        this.emitAction({
+          type: KORERO.Actions.SET_LINK_TAPPED,
+          flag: false
+        })
+
+        this.emitAction({
+          type: KORERO.Actions.SET_REFER_VIEW,
+          referView: false
+        });
+      },
+
+      _saveLinking: function(saveLinking, id) {
+        if (id) return;
+        if (saveLinking) {
+          var nodeId = this.state.currentLink;
+
+          var referId = null;
+          do {
+            referId = chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 10});
+          } while (this.state.newDiscussionObject.links[nodeId].refers[referId]);
+
+          var data = { video: this.state.videoId};
+          if (this.state.linkTime.start) {
+            data.videostart = this.state.linkTime.start
+          }
+
+          if (this.state.linkTime.end) {
+            data.videoend = this.state.linkTime.end;
+            if (!this.state.linkTime.start) {
+              data.videostart = 0;
+            }
+          }
+
+          this.emitAction({
+            type: KORERO.Actions.SET_NEW_DISCUSSION_LINK_REFER,
+            nodeId: nodeId,
+            referId: referId,
+            data: {
+              boxes: {
+                root: data
+              }
+            }
+          });
+
+          // emitAction to open thumbnail block
+
+          this.emitAction({
+            type: KORERO.Actions.SET_SAVE_LINKING,
+            flag: false
+          })
+        }
       }
     });
   </script>

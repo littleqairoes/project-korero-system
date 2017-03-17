@@ -29,7 +29,9 @@
       </template>
 
       <template is="dom-if" if="showDiscussion">
-        <project-korero-system-discussion class="flex"></project-korero-system-discussion>
+        <template is="dom-if" if="[[state.videoId]]">
+          <project-korero-system-discussion class="flex"></project-korero-system-discussion>
+        </template>
         <!--<div class="flex">
 
         </div>-->
@@ -71,6 +73,8 @@
         this.set('state', {
           state: 'normal',
 
+          disucsionId: null,
+
           discussionToolbar: false,
           referView: false,
 
@@ -79,16 +83,31 @@
           newDiscussionObject: {
             title: '',
             text: '',
-            nodes: {},
+            links: {},
+            currentLink: null,
             videolink: false
           },
           ui: 'korero',
           interfaceId: null,
+          videoId: null,
 
           // linking states
           linking: false,
           linkingEdit: false,
+          linkTapped: false,
           linkTime: {
+            start: null,
+            end: null
+          },
+          newLinkTime: {
+            start: null,
+            end: null
+          },
+          saveLinking: false,
+
+          // show linking states
+          showLinkingFlag: false,
+          showLinkingTime: {
             start: null,
             end: null
           },
@@ -114,12 +133,7 @@
             end: null
           },
 
-          // show linking states
-          showLinkingFlag: false,
-          showLinkingTime: {
-            start: null,
-            end: null
-          }
+
           // interfaceId: this.params.id
         });
       }

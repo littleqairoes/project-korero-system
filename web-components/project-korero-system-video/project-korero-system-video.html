@@ -102,7 +102,7 @@
 
                 <template is="dom-if" if="{{state.linkingEdit}}">
                   <paper-button
-                    on-tap="addSegment">
+                    on-tap="_addSegment">
                     + Add one more segment
                   </paper-button>
                 </template>
@@ -169,7 +169,12 @@
       ],
 
       observers: [
-        '_newDiscussion(state.createDiscussion)'
+        '_newDiscussion(state.createDiscussion)',
+        '_newComment(state.createComment)',
+        '_playSpecific(state.playspecific)',
+        '_startLinking(state.linking, state.linkingEdit, state.linkTapped)',
+        '_showLinking(state.showLinkingFlag, state.linkTapped, state.showLinkingTime.start, state.showLinkingTime.end)',
+        '_setVideo(video.videoId)'
       ],
 
       _resizeBind: null,
@@ -182,6 +187,13 @@
 
       detached: function() {
         window.removeEventListener('resize', this._resizeBind);
+      },
+
+      _setVideo: function(id) {
+        this.emitAction({
+          type: KORERO.Actions.SET_VIDEO,
+          videoId: id
+        });
       },
 
       _resize: function() {
@@ -218,7 +230,7 @@
 
           this.visualstart = this._timeToString(this.state.linkTime.start);
           this.visualend = this._timeToString(this.state.linkTime.end);
-          this._changeLinkVideoTIme();
+          this._changeLinkVideoTime();
           this.$$('#video-content').seekTo(this.state.linkTime.start);
         } else if (this.state.discussionLink) {
           this.emitAction({
@@ -243,7 +255,7 @@
           this.$$('#video-content').seekTo(this.videoduration != 1 ? this.videoduration * scrubPos : 0);
         }
 
-        Polymer.debounce('close-thumbnail-video', this._closeThumbnailVideo.bind(this), 1000);
+       this.debounce('close-thumbnail-video', this._closeThumbnailVideo.bind(this), 1000);
 
       },
 
@@ -268,7 +280,7 @@
         if (!this.videoLoaded && e.detail.data) {
           this.videoLoaded = true;
         }
-        if (e.detail.data === 1 && this.playspecific) {
+        if (e.detail.data === 1 && this._playspecific) {
           this._changeSpecificTime();
         }
       },
@@ -286,44 +298,44 @@
           if (this.state.linking) {
             if (time >= this.state.linkTime.end) {
               this.$$('#video-content').seekTo(this.state.linkTime.start);
-              this.play();
+              this._pause();
             } else if (time < this.state.linkTime.start) {
               this.$$('#video-content').seekTo(this.state.linkTime.start);
-              this.play();
+              this._play();
             }
           } else if (this.state.discussionLink) {
             if (time >= this.state.discussionTime.end) {
               this.$$('#video-content').seekTo(this.state.discussionTime.start);
-              this.play();
+              this._pause();
             } else if (time < this.state.discussionTime.start) {
               this.$$('#video-content').seekTo(this.state.discussionTime.start);
-              this.play();
+              this._play();
             }
           } else if (this.state.playspecific) {
             if (this.state.playTime.start != null || this.state.playTime.start != undefined)  {
               if (time >= this.state.playTime.end) {
                 this.$$('#video-content').seekTo(this.state.playTime.start);
-                this.play();
+                this._pause();
               } else if (time < this.state.playTime.start) {
                 this.$$('#video-content').seekTo(this.state.playTime.start);
-                this.play();
+                this._play();
               }
             } else if (time < 0 || time >= this.videoduration){
               this.$$('#video-content').seekTo(0);
-              this.play();
+              this._play();
             }
           } else if (this.state.showLinkingFlag) {
             if (this.state.showLinkingTime.start != null || this.state.showLinkingTime.start != undefined) {
               if (time >= this.state.showLinkingTime.end) {
                 this.$$('#video-content').seekTo(this.state.showLinkingTime.start);
-                this.play();
+                this._pause();
               } else if (time < this.state.showLinkingTime.start) {
                 this.$$('#video-content').seekTo(this.state.showLinkingTime.start);
-                this.play();
+                this._play();
               }
             } else if (time < 0 || time >= this.videoduration){
               this.$$('#video-content').seekTo(0);
-              this.play();
+              this._play();
             }
           }
         }
@@ -333,7 +345,7 @@
       _changeLinkVideoTime: function() {
         var elPlayTime = this.$$('#linking-play-time');
         elPlayTime.setAttribute('style', `left: ${(this.state.linkTime.start/this.videoduration)*100}%; width: ${((this.state.linkTime.end - this.state.linkTime.start)/this.videoduration)*100}%`);
-        Polymer.async(function() {
+        Polymer.Base.async(function() {
           this.$$('#start-play-time').setAttribute('style', `left: ${(this.state.linkTime.start/this.videoduration)*100}%;`);
           this.$$('#end-play-time').setAttribute('style', `left: ${(this.state.linkTime.end/this.videoduration)*100}%`);
         }.bind(this), 100)
@@ -342,7 +354,7 @@
       _changeShowLinkVideoTime: function() {
         var elPlayTime = this.$$('#linking-play-time');
         elPlayTime.setAttribute('style', `left: ${(this.state.showLinkingTime.start/this.videoduration)*100}%; width: ${((this.state.showLinkingTime.end - this.state.showLinkingTime.start)/this.videoduration)*100}%`);
-        Polymer.async(function(){
+        Polymer.Base.async(function(){
           if (this.$$('#start-play-time')) this.$$('#start-play-time').setAttribute('style', `left: ${(this.state.showLinkingTime.start/this.videoduration)*100}%;`);
           if (this.$$('#end-play-time')) this.$$('#end-play-time').setAttribute('style', `left: ${(this.state.showLinkingTime.end/this.videoduration)*100}%`);
         }.bind(this), 100)
@@ -355,7 +367,7 @@
         // firing it back to discussion, which is handled already by uniflow
         // this.fire('change-discussion-time', {discussionstart: this.discussionstart, discussionend: this.discussionend});
 
-        Polymer.async(function(){
+        Polymer.Base.async(function(){
           this.$$('#start-play-time').setAttribute('style', `left: ${(this.state.discussionTime.start/this.videoduration)*100}%`);
           this.$$('#end-play-time').setAttribute('style', `left: ${(this.state.discussionTime.end/this.videoduration)*100}%`);
         }.bind(this), 100)
@@ -367,7 +379,7 @@
 
         // this.fire('change-comment-time', {discussionid: this.commentdiscussionid , commentstart: this.commentstart, commentend: this.commentend});
 
-        Polymer.async(function(){
+        Polymer.Base.async(function(){
           this.$$('#start-play-time').setAttribute('style', `left: ${(this.start.commentTime.start/this.videoduration)*100}%`);
           this.$$('#end-play-time').setAttribute('style', `left: ${(this.start.commentTime.end/this.videoduration)*100}%`);
         }.bind(this), 100)
@@ -384,13 +396,14 @@
       },
 
       _newDiscussion: function(flag) {
-        if (flag) {
-          this.pause();
 
-          this.emitAction({
-            type: KORERO.Actions.SET_DISCUSSION_LINK_FLAG,
-            flag: true
-          });
+        this.emitAction({
+          type: KORERO.Actions.SET_DISCUSSION_LINK_FLAG,
+          flag: flag
+        });
+
+        if (flag) {
+          this._pause();
 
           this.emitAction({
             type: KORERO.Actions.SET_DISCUSSION_TIME,
@@ -398,14 +411,174 @@
           });
 
           if (this.state.ui === 'adi') {
-            this.visualstart = this.timeToString(this.state.discussionTime.start);
-            this.visualend = this.timeToString(this.state.discussionTime.end);
+            this.visualstart = this._timeToString(this.state.discussionTime.start);
+            this.visualend = this._timeToString(this.state.discussionTime.end);
             this._changeDiscussionTime();
             this.$$('#video-content').seekTo(this.state.discussionTime.start);
           }
-        }
-      }
+        } else {
+          this.emitAction({
+            type: KORERO.Actions.SET_DISCUSSION_TIME,
+            time: null
+          });
 
+          var elPlayTime = this.$$('#discussion-play-time');
+          elPlayTime.setAttribute('style', `left: 0; width: 0%`);
+        }
+      },
+
+      _newComment: function(flag) {
+        if (flag) {
+          // comment discussion Id should have been set
+          this._pause();
+
+          this.emitAction({
+            type: KORERO.Actions.SET_COMMENT_LINK_FLAG,
+            flag: true
+          });
+
+          this.emitAction({
+            type: KORERO.Actions.SET_COMMENT_TIME,
+            time: this.videotime
+          });
+
+          this.visualstart = this._timeToString(this.state.commentTime.start);
+          this.visualend = this._timeToString(this.state.commentTime.end);
+          this._changeCommentTime();
+          this.$$('#video-content').seekTo(this.state.commentTime.start);
+        }
+      },
+
+      // can't find who called close Comment
+      _closeComment: function(flag) {
+        if (!flag) {
+          this.emitAction({
+            type: KORERO.Actions.SET_COMMENT_LINK_FLAG,
+            flag: false
+          });
+
+          this.emitAction({
+            type: KORERO.Actions.SET_COMMENT_TIME,
+            time: null
+          });
+
+          this.visualend = null;
+          this.visualstart = null;
+          var elPlayTime = this.$$('#comment-play-time');
+          elPlayTime.setAttribute('style', `left: 0; width: 0%`);
+        }
+      },
+
+      // called by discussion block... the playTime.start and end should be set there
+      _playSpecific: function(flag) {
+        if (flag) {
+          if (this.state.playTime.start != undefined || this.state.playTime.start != null) {
+            this.$$('#video-content').seekTo(this.state.playTime.start);
+            this._changeSpecificTime();
+          } else {
+            var elPlayTime = this.$$('#specific-play-time');
+            elPlayTime.setAttribute('style', `left: 0; width: 0`);
+          }
+        } else {
+          var elPlayTime = this.$$('#specific-play-time');
+          elPlayTime.setAttribute('style', `left: 0; width: 0`);
+        }
+      },
+
+      _checkGeneral: function(linkVideoStart, linkingEdit) {
+        return linkingEdit && (linkVideoStart == undefined || linkVideoStart == null);
+      },
+
+      // start-linking... called in new discussion block. Set linking, linkingEdit to true and linkTime.start and linkTime.end to null
+      _startLinking: function(linking, linkingEdit, linkTapped) {
+        if (linking && linkingEdit) {
+          this._pause();
+          this.visualstart = this._timeToString(0);
+          this.visualend = this._timeToString(this.videoduration);
+          this._changeLinkVideoTime();
+          Polymer.RenderStatus.afterNextRender(this, function() {
+            if (this.$$('#start-play-time')) {
+              this.$$('#start-play-time').setAttribute('style', `left: 0%;`);
+            }
+            if (this.$$('#end-play-time')) {
+              this.$$('#end-play-time').setAttribute('style', `left: 100%`);
+            }
+          })
+        }
+
+        if (!linking && !linkingEdit && !linkTapped) {
+          this.visualend = null;
+          this.visualstart = null;
+          var elPlayTime = this.$$('#linking-play-time');
+          elPlayTime.setAttribute('style', `left: 0; width: 0`);
+          this._pause();
+        }
+      },
+
+      // show linking... set showLinkingFlag at thumbnails block and time start and time end. and tap as well.
+      _showLinking: function(flag, tap, start, end) {
+        if (flag && tap) {
+          if (start && end) {
+            this._changeShowLinkVideoTime();
+            this.$$('#video-content').seekTo(start);
+          } else {
+            this.$$('#video-content').seekTo(0)
+          }
+          this._play();
+        } else if (!flag && !tap) {
+          var elPlayTime = this.$$('#show-linking-play-time');
+          elPlayTime.setAttribute('style', `left: 0; width: 0`);
+          this._pause();
+        }
+      },
+
+      _saveLinking: function() {
+        // send videoid, linkvideostart, linkvideoend, and discussionid
+        this.emitAction({
+          type: KORERO.Actions.SET_NEW_LINK_TIME,
+          start: this.state.linkTime.start,
+          end: this.state.linkTime.end
+        })
+
+        this.emitAction({
+          type: KORERO.Actions.SET_SAVE_LINKING,
+          flag: true
+        })
+
+        this.emitAction({
+          type: KORERO.Actions.CANCEL_LINKING
+        });
+      },
+
+      _addSegment: function() {
+        // send videoid, linkvideostart, linkvideoend, and discussionid
+        this.emitAction({
+          type: KORERO.Actions.SET_NEW_LINK_TIME,
+          start: this.state.linkTime.start,
+          end: this.state.linkTime.end
+        })
+
+        this.emitAction({
+          type: KORERO.Actions.SET_SAVE_LINKING,
+          flag: true
+        })
+
+        this.emitAction({
+          type: KORERO.Actions.SET_LINK_TIME,
+          time: this.videotime
+        });
+
+        this.visualstart = this._timeToString(this.videotime);
+        this.visualend = this._timeToString(this.videotime);
+        this._changeLinkVideoTime();
+        this._pause();
+      },
+
+      _cancelLinking: function() {
+        this.emitAction({
+          type: KORERO.Actions.CANCEL_LINKING
+        });
+      }
 
     });
   </script>

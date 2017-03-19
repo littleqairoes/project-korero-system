@@ -1,6 +1,7 @@
 <!-- Polymer dependencies -->
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/polymerfire/firebase-document.html">
+<link rel="import" href="../../bower_components/polymerfire/firebase-auth.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../../bower_components/uniflow-polymer/action-emitter.html">
 <link rel="import" href="../../bower_components/uniflow-polymer/application-state.html">
@@ -9,6 +10,9 @@
 <link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-interface-behavior.html">
 <link rel="import" href="../../web-components/project-korero-system-discussion/project-korero-system-discussion.html">
 <link rel="import" href="../../web-components/project-korero-system-activity/project-korero-system-activity.html">
+<link rel="import" href="../../web-components/project-korero-system-discussion/project-korero-system-discussion-scripts.html">
+<link rel="import" href="../../web-components/areas/activity-area.html">
+<link rel="import" href="../../web-components/areas/discussion-area.html">
 
 <!-- Style dependency -->
 <link rel="import" href="interface-page-style.html">
@@ -19,9 +23,18 @@
       :host {
         display: block;
       }
+
+      :host .discussion-area {
+        min-width: 320px;
+        width: 35%;
+      }
+
+      :host .activity-area {
+        min-width: 320px;
+      }
     </style>
 
-    <project-korero-system-action-dispatcher state="{{state}}"></project-korero-system-action-dispatcher>
+    <!--<project-korero-system-action-dispatcher state="{{state}}"></project-korero-system-action-dispatcher>
 
     <div class="horizontal layout">
       <template is="dom-if" if="showVideo">
@@ -34,9 +47,57 @@
         </template>
         <!--<div class="flex">
 
-        </div>-->
+        </div>
       </template>
-    </div>
+    </div>-->
+    <firebase-auth id="auth" user="{{user}}" on-error="_catchError"></firebase-auth>
+    <firebase-document path="[[interfacePath.videos]]/[[params.id]]" data="{{video}}"></firebase-document>
+
+    <template is="dom-if" if="[[user]]">
+      <div class="horizontal layout  wrap">
+        <div class="flex activity-area">
+          <activity-area
+            id="activity-area"
+            videoid="[[videoid]]"
+            ui="[[ui]]"
+            on-cancel-edit-activity="_cancelEditActivity"
+            on-save-edit-activity="_saveEditActivity"
+            on-cancel-edit-comment-activity="_cancelEditCommentActivity"
+            on-save-edit-comment-activity="_saveEditCommentActivity"
+            on-save-linking="_saveLinking"
+            on-cancel-linking="_cancelLinking"
+            on-change-discussion-time="_changeDiscussionTime"
+          ></activity-area>
+        </div>
+        <div class=" discussion-area">
+          <discussion-area
+            id="discussion-area"
+            videoid="[[videoid]]"
+            ui="[[ui]]"
+            user="[[user]]"
+            interfaceid="[[params.id]]"
+            on-new-discussion="_newDiscussion"
+            on-close-discussion="_closeDiscussion"
+            on-ready-edit-activity="_readyEditActivity"
+            on-ready-edit-comment-activity="_readyEditCommentActivity"
+            on-edit-activity="_editActivity"
+            on-edit-comment-activity="_editCommentActivity"
+            on-close-edit-activity="_closeEditActivity"
+            on-close-edit-comment-activity="_closeEditCommentActivity"
+            on-mouseover-thumbnail="_mouseoverThumbnail"
+            on-mouseout-thumbnail="_mouseoutThumbnail"
+            on-tap-thumbnail="_tapThumbnail"
+            on-pre-show-thumbnail="_preShowThumbnail"
+            on-start-linking="_startLinking"
+            on-start-comment-linking="_startLinking"
+            on-tap-video="_tapVideo"
+            on-mouseover-video="_mouseoverVideo"
+            on-play-specific="_playSpecific"
+            on-change-task-start="_changeTaskStart"
+          ></discussion-area>
+        </div>
+      </div>
+    </template>
   </template>
 
   <script>
@@ -50,27 +111,133 @@
         UniFlow.ApplicationState,
       ],
 
-      properties: {
-        showVideo: {
-          type: Boolean,
-          value: false
-        },
-        showDiscussion: {
-          type: Boolean,
-          value: false
-        },
-      },
-
       observers: [
-        '_setInterfaceId(params.id)'
+        '_setVideo(video.videoId)'
       ],
 
-      _setInterfaceId: function(id) {
-        this.emitAction({type: KORERO.Actions.SET_INTERFACE_ID, id: id});
+      properties: {
+        videoid: {
+          type: String,
+          reflectToAttribute: true
+        },
+        ui: {
+          type: String,
+          value: 'korero'
+        },
+        pageData: {
+          type: Object
+        },
+        taskData: {
+          type: Object
+        },
+        pageRoute: {
+          type: Object
+        },
+        user: {
+          type: Object
+        },
+
       },
 
-      ready: function() {
-        this.set('state', {});
+      _setVideo: function(id) {
+        console.log(id);
+        this.videoid = id ;
+      },
+
+      _newDiscussion: function() {
+        this.$$('#activity-area').newDiscussion();
+      },
+      _closeDiscussion: function() {
+        this.$$('#activity-area').closeDiscussion();
+      },
+      _changeDiscussionTime: function(e) {
+        this.$$('#discussion-area').changeDiscussionTime(e.detail);
+      },
+
+      _readyEditActivity: function() {
+        this.$$('#activity-area').openEditActivity();
+      },
+      _editActivity: function(e) {
+        if (e.model) {
+          this.$$('#activity-area').editActivity(e.detail);
+        }
+      },
+      _closeEditActivity: function() {
+        this.$$('#activity-area').closeEditActivity();
+      },
+      _cancelEditActivity: function() {
+        this.$$('#discussion-area').cancelEditActivity();
+      },
+      _saveEditActivity: function(e) {
+        if (e.model) {
+          this.$$('#discussion-area').saveEditActivity(e.detail);
+        }
+      },
+
+      _readyEditCommentActivity: function() {
+        this.$$('#activity-area').openEditCommentActivity();
+      },
+      _editCommentActivity: function(e) {
+        if (e.model) {
+          this.$$('#activity-area').editCommentActivity(e.detail);
+        }
+      },
+      _closeEditCommentActivity: function() {
+        this.$$('#activity-area').closeEditCommentActivity();
+      },
+      _cancelEditCommentActivity: function(e) {
+        if (e.model) {
+          this.$$('#discussion-area').cancelEditCommentActivity(e.detail);
+        }
+      },
+      _saveEditCommentActivity: function(e) {
+        if (e.model) {
+          this.$$('#discussion-area').saveEditCommentActivity(e.detail);
+        }
+      },
+      _mouseoverThumbnail: function(e) {
+        if (e.model) {
+          this.$$('activity-area').hoverActivity(e.detail);
+        }
+      },
+      _mouseoverVideo: function(e) {
+        if (e.model) {
+          this.$$('activity-area').showLinking(e.detail.videostart, e.detail.videoend);
+        }
+      },
+      _mouseoutThumbnail: function() {
+        this.$$('activity-area').closeHoverActivity();
+      },
+      _preShowThumbnail: function(e) {
+        if (e.model) {
+          this.$$('#activity-area').preShowActivity(e.detail);
+        }
+      },
+      _tapThumbnail: function(e) {
+        if (e.model) {
+          this.$$('#activity-area').showActivity(e.detail);
+        }
+      },
+      _tapVideo: function(e) {
+        if (e.model) {
+          this.$$('activity-area').showLinking(e.detail.videostart, e.detail.videoend, true);
+        }
+      },
+
+      _startLinking: function(e) {
+        this.$$('#activity-area').startLinking(e.detail);
+      },
+      _saveLinking: function(e) {
+        console.log(e)
+        this.$$('#discussion-area').saveLinking(e.detail);
+
+      },
+      _cancelLinking: function() {
+        this.$$('#discussion-area').cancelLinking();
+      },
+
+      _playSpecific: function(e) {
+        this.$$('#activity-area').playSpecific(e.detail);
       }
     });
   </script>

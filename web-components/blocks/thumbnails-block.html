@@ -1,0 +1,338 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/google-youtube/google-youtube.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<!--<script src="../js/pdf.js"></script>-->
+
+<dom-module id="thumbnails-block">
+  <template>
+    <style include="iron-flex iron-flex-alignment iron-flex-factors">
+      :host #thumbnails-block-content {
+        padding: 10px;
+        position: relative;
+      }
+
+      :host .container {
+        overflow-x: auto;
+        width: 100%;
+      }
+
+      :host img {
+        height: 100px;
+        border: 1px solid black;
+        cursor: pointer;
+      }
+
+      :host img:hover {
+        border: 1px solid red;
+      }
+
+      :host .quote {
+        font-size: 0.8em;
+      }
+
+      :host .paper-mat {
+        position: relative;
+        margin-right: 10px;
+      }
+
+      :host .video-overlay {
+        width: 160px;
+        height: 90px;
+        position: absolute;
+        cursor: pointer;
+        border: 1px solid black;
+        top: 18px;
+      }
+
+      :host .video-overlay:hover {
+        border: 1px solid red;
+      }
+
+      :host .video-overlay-time, .pdf-description {
+        text-align: center;
+        font-size: 0.8em;
+      }
+
+      :host #exit-thumbnail {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+      }
+    </style>
+
+    <div id="thumbnails-block-content">
+      <paper-icon-button id="exit-thumbnail" icon="icons:close" on-tap="_closeThumbnailsBlock"></paper-icon-button>
+      <div class="quote">
+        Referential term: "{{text}}"
+      </div>
+      <div class="horizontal layout container">
+        <template is="dom-repeat" items="{{boxes}}">
+          <paper-material class="paper-mat">
+            <template is="dom-if" if="{{!item.video}}">
+              <div class="pdf-description">
+                PDF
+              </div>
+              <img
+                class="thumbnail"
+                src="[[item.thumbnail]]"
+                data-index$="[[item.index]]"
+                on-mouseover="_mouseoverThumbnail"
+                on-mouseout="_mouseoutThumbnail"
+                on-tap="_tapThumbnail"
+              >
+              <div class="pdf-description">
+                <template is="dom-if" if="{{item.top}}">
+                  Page [[item.page]]
+                </template>
+                <template is="dom-if" if="{{!item.top}}">
+                  General
+                </template>
+              </div>
+            </template>
+            <template is="dom-if" if="{{item.video}}">
+              <div class="pdf-description">
+                Main Video
+              </div>
+              <google-youtube
+                width="160px"
+                height="90px"
+                video-id="[[item.video]]"
+                chromeless
+              >
+              </google-youtube>
+              <div
+                class="video-overlay"
+                data-index$="[[item.index]]"
+                on-mouseover="_mouseoverThumbnail"
+                on-mouseout="_mouseoutThumbnail"
+                on-tap="_tapThumbnail"
+              ></div>
+              <div class="video-overlay-time">
+                <template is="dom-if" if="{{item.videostart}}">
+                  [[timeToString(item.videostart)]] - [[timeToString(item.videoend)]]
+                </template>
+                <template is="dom-if" if="{{!item.videostart}}">
+                  General
+                </template>
+              </div>
+            </template>
+          </paper-material>
+        </template>
+      </div>
+      <template is="dom-if" if="{{hover}}">
+        <div class="horizontal layout">
+          <paper-button class="flex" on-tap="_closeThumbnailsBlock">
+            Exit
+          </paper-button>
+          <template is="dom-if" if="{{editor}}">
+            <paper-button class="flex" on-tap="_openEditorOptions">
+              Refer more...
+            </paper-button>
+          </template>
+        </div>
+      </template>
+    </div>
+    <paper-toast id="toaster"></paper-toast>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'thumbnails-block',
+      properties: {
+        boxes: {
+          type: Object,
+        },
+        editor: {
+          type: Boolean,
+          value: false
+        },
+        previousboxes: {
+          type: Object
+        },
+        permanent: {
+          type: Boolean
+        },
+        text: {
+          type: String
+        },
+        previoustext: {
+          type: String
+        },
+        previousNewDiscussion: {
+          type: Boolean
+        },
+        hover: {
+          type: Boolean
+        },
+        previousnode: {
+          type: Object
+        },
+        discussionid: String,
+        prevdiscid: String,
+
+      },
+      listeners: {
+        // 'mousemove': '_mouseMove'
+      },
+      _mouseMove: function(e) {
+        if (!this.permanentOpen) {
+
+          this._closeThumbnailsBlock();
+        }
+      },
+
+      timeToString: function(time) {
+        return parseInt(time / 60, 10) + ':' + (parseInt(time % 60, 10) < 10 ? '0' : '') + parseInt(time % 60, 10);
+      },
+      setPrevious: function() {
+        if (this.permanent) {
+          this.hover = this.permanent;
+          this.text = this.previoustext
+          this.editor = this.previousNewDiscussion
+          this.discussionid = this.prevdiscid
+          this.boxes = [];
+          for (var i in this.previousboxes) {
+            this.push('boxes', this.previousboxes[i]);
+          }
+
+          this.node = {};
+          for (var k in this.previousnode.refers) {
+            this.node = {
+              refers: {}
+            }
+            this.node.refers[k] = {
+              boxes: {},
+              file: this.previousnode.refers[k].file
+            };
+            for (var l in this.previousnode.refers[k].boxes) {
+              this.node.refers[k].boxes[l] = this.previousnode.refers[k].boxes[l]
+            }
+          }
+        } else {
+          this.setNode();
+        }
+      },
+      setNode: function(node, text, newDiscussion, p, discussionid, open) {
+        this.text = text;
+        this.boxes = [];
+        this.hover = p;
+        this.editor = newDiscussion;
+        this.node = node;
+        this.discussionid = discussionid;
+        this.permanentOpen = open;
+        // console.log(node);
+
+        if (node) {
+          for (var i in node.refers) {
+            for (var j in node.refers[i].boxes) {
+              var obj = {
+                referId: i,
+                boxId: j,
+                index: this.boxes.length,
+                thumbnail: node.refers[i].boxes[j].thumbnail,
+                file: node.refers[i].file,
+                top: node.refers[i].boxes[j].top,
+                left: node.refers[i].boxes[j].left,
+                width: node.refers[i].boxes[j].width,
+                height: node.refers[i].boxes[j].height,
+                video: node.refers[i].boxes[j].video,
+                videostart: node.refers[i].boxes[j].videostart,
+                videoend: node.refers[i].boxes[j].videoend,
+                page: node.refers[i].boxes[j].page
+              };
+              // console.log(obj)
+              this.push('boxes', obj);
+            }
+          }
+          if (p) {
+            this.previousboxes = [];
+            this.previoustext = text;
+            this.previousNewDiscussion = newDiscussion;
+            this.permanent = p;
+            this.prevdiscid = discussionid
+            for (var k in this.boxes) {
+              this.push('previousboxes', {
+                referId: this.boxes[k].referId,
+                boxId: this.boxes[k].boxId,
+                thumbnail: this.boxes[k].thumbnail,
+                file: this.boxes[k].file,
+                top: this.boxes[k].top,
+                left: this.boxes[k].left,
+                width: this.boxes[k].width,
+                height: this.boxes[k].height,
+                index: k,
+                video: this.boxes[k].video,
+                videostart: this.boxes[k].videostart,
+                videoend: this.boxes[k].videoend,
+                page: this.boxes[k].page
+              });
+            }
+            this.previousnode = {};
+            for (var k in node.refers) {
+              this.previousnode = {
+                refers: {}
+              }
+              this.previousnode.refers[k] = {
+                boxes: {},
+                file: node.refers[k].file
+              };
+              for (var l in node.refers[k].boxes) {
+                this.previousnode.refers[k].boxes[l] = node.refers[k].boxes[l]
+              }
+            }
+          }
+        } else {
+          this.permanent = false;
+          this.fire('remove-thumbnails-block', {}, {bubbles: false});
+        }
+      },
+      _mouseoverThumbnail: function(e) {
+        var el = e.target;
+        // console.log(el)
+        //console.log(, e.target.getAttribute('data-index'), this.boxes)
+        if (this.boxes[el.getAttribute('data-index')].video) {
+          this.fire('mouseover-video', this.boxes[e.target.getAttribute('data-index')], {bubbles: false})
+        } else {
+          this.fire('mouseover-thumbnail', this.boxes[e.target.getAttribute('data-index')], {bubbles: false});
+        }
+
+      },
+      _mouseoutThumbnail: function(e) {
+        this.fire('mouseout-thumbnail', {}, {bubbles: false});
+      },
+      _tapThumbnail: function(e) {
+        var el = e.target;
+        //console.log(, e.target.getAttribute('data-index'), this.boxes)
+        if (this.boxes[el.getAttribute('data-index')].video) {
+          // el.pause();
+          this.fire('tap-video', this.boxes[e.target.getAttribute('data-index')], {bubbles: false});
+        } else {
+          this.fire('pre-show-thumbnail', this.boxes[el.getAttribute('data-index')], {bubbles: false});
+          var node = this.node;
+          var referId = this.boxes[el.getAttribute('data-index')].referId;
+          PDFJS.getDocument(this.boxes[el.getAttribute('data-index')].file).then(function(pdf){
+
+            console.log(node, referId)
+            this.fire('tap-thumbnail', {pdf: pdf, boxes: node.refers[referId].boxes});
+          }.bind(this)).catch(function(err){
+            console.log(err);
+            this.$.toaster.show(err.message);
+          }.bind(this));
+        }
+      },
+      _closeThumbnailsBlock: function(e) {
+        this.permanent = false;
+        this.permanentOpen = false;
+        this.fire('close-thumbnails-block', {discussionid: this.discussionid}, {bubbles: false});
+      },
+      _openEditorOptions: function() {
+        this.fire('open-editor-options', {discussionid: this.discussionid}, {bubbles: false});
+      }
+    })
+  </script>
+</dom-module>

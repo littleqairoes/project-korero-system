@@ -1,0 +1,261 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../blocks/video-block.html">
+<link rel="import" href="../blocks/edit-document-block.html">
+<link rel="import" href="../blocks/edit-document-comment-block.html">
+<link rel="import" href="../blocks/hover-document-block.html">
+<link rel="import" href="../blocks/show-document-block.html">
+
+<dom-module id="activity-area">
+  <template>
+    <style include="iron-flex iron-flex-alignment iron-flex-factors">
+      :host {
+        width: inherit;
+      }
+      :host #edit-document-block {
+        position: absolute;
+        top: 0;
+      }
+
+      :host #edit-document-comment-block {
+        position: absolute;
+        top: 0;
+      }
+
+      :host #hover-document-block {
+        position: absolute;
+        top: 0;
+      }
+
+      :host #show-document-block {
+        position: absolute;
+        top: 0;
+      }
+
+      :host #container-panel {
+        position: relative;
+      }
+    </style>
+    <div class="container" id="container-panel">
+      <div class="horizontal layout center">
+        <div class="flex">
+        </div>
+        <div class="flex-10" style="margin-top: 20px">
+          <video-block
+            id="video-block"
+            videoid="[[videoid]]"
+            videotime="{{videoTime}}"
+            videostart="{{videoStart}}"
+            videoend="{{videoEnd}}"
+            on-save-linking="_saveLinking"
+            on-cancel-linking="_cancelLinking"
+            on-change-discussion-time="_changeDiscussionTime"
+            ui="[[ui]]"
+          ></video-block>
+        </div>
+        <div class="flex">
+        </div>
+      </div>
+      <template is="dom-if" if="{{viewHoverActivity}}">
+        <hover-document-block id="hover-document-block"></hover-document-block>
+      </template>
+      <template is="dom-if" if="{{viewShowActivity}}">
+        <show-document-block
+          id="show-document-block"
+          on-close-show-activity="closeShowActivityFromActivity"
+        ></show-document-block>
+      </template>
+      <template is="dom-if" if="{{viewEditCommentActivity}}">
+        <edit-document-comment-block
+          id="edit-document-comment-block"
+          on-cancel-edit-comment-activity="_cancelEditCommentActivity"
+          on-save-edit-comment-activity="_saveEditCommentActivity">
+        </edit-document-block>
+      </template>
+      <template is="dom-if" if="{{viewEditActivity}}">
+        <edit-document-block
+          id="edit-document-block"
+          on-cancel-edit-activity="_cancelEditActivity"
+          on-save-edit-activity="_saveEditActivity">
+        </edit-document-block>
+      </template>
+      <template is="dom-if" if="{{viewTabBlock}}">
+        <tabs-block
+          id="tab-block"
+        ></tabs-block>
+      </template>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'activity-area',
+      properties: {
+        videoid: {
+          type: String
+        },
+        viewEditActivity: {
+          type: Boolean,
+          value: false
+        },
+        viewEditCommentActivity: {
+          type: Boolean,
+          value: false
+        },
+        viewHoverActivity: {
+          type: Boolean,
+          value: false
+        },
+        viewShowActivity: {
+          type: Boolean,
+          value: false
+        },
+        videoTime: {
+          type: Number,
+          notify: true
+        },
+        videoStart: {
+          type: Number,
+          notify: true
+        },
+        videoEnd: {
+          type: Number,
+          notify: true
+        }
+      },
+      newDiscussion: function() {
+        this.$$('#video-block').newDiscussion();
+      },
+      newComment: function(data) {
+        this.$$('#video-block').newComment(data);
+      },
+      closeDiscussion: function() {
+        this.$$('#video-block').closeDiscussion();
+      },
+      closeComment: function() {
+        this.$$('#video-block').closeComment();
+      },
+      _changeDiscussionTime: function(e) {
+        // this.fire('change-discussion-time', e.detail, {bubbles: false});
+      },
+      openEditActivity: function() {
+        this.viewEditActivity = true
+        this.resetVideoLink()
+      },
+      openEditCommentActivity: function() {
+        this.viewEditCommentActivity = true;
+        this.resetVideoLink()
+      },
+      editActivity: function(data) {
+        this.viewEditActivity = true;
+        this.$$('#edit-document-block').setDocument(data);
+        this.resetVideoLink()
+      },
+      editCommentActivity: function(data) {
+        this.viewEditCommentActivity = true;
+        this.$$('#edit-document-comment-block').setDocument(data);
+        this.resetVideoLink()
+      },
+
+      hoverActivity: function(data) {
+        this.viewHoverActivity = true;
+        setTimeout(function(){
+          this.$$('#hover-document-block').setDocument(data);
+          this.resetVideoLink()
+        }.bind(this), 100);
+      },
+
+      preShowActivity: function(data) {
+        this.viewShowActivity = true;
+        setTimeout(function(){
+          this.$$('#show-document-block').setPlaceholder(data);
+          this.resetVideoLink()
+        }.bind(this), 100)
+      },
+      showActivity: function(data) {
+        this.viewShowActivity = true;
+        setTimeout(function(){
+          this.$$('#show-document-block').setDocument(data);
+          this.resetVideoLink()
+        }.bind(this), 100);
+      },
+
+      closeShowActivity: function() {
+        this.$$('#show-document-block').closeActivity();
+        this.viewShowActivity = false;
+        this.resetVideoLink()
+      },
+      closeShowActivityFromActivity: function() {
+        this.viewShowActivity = false;
+        this.resetVideoLink()
+      },
+      closeHoverActivity: function() {
+        if (this.viewHoverActivity) {
+          this.$$('#hover-document-block').closeHover();
+          this.viewHoverActivity = false;
+
+        }
+        this.$$('#video-block').resetShowLinking()
+        // this.resetVideoLink()
+      },
+      closeEditActivity: function() {
+        if (this.$$('#edit-document-block')) {
+          this.$$('#edit-document-block').cancelActivity();
+          this.resetVideoLink()
+        }
+      },
+      closeEditCommentActivity: function() {
+        if (this.$$('#edit-document-comment-block')) {
+          this.$$('#edit-document-comment-block').cancelActivity();
+          this.resetVideoLink()
+        }
+      },
+      _cancelEditActivity: function() {
+        // this.fire('cancel-edit-activity', {}, {bubbles: false});
+        this.resetVideoLink()
+        this.viewEditActivity = false;
+      },
+      _cancelEditCommentActivity: function(e) {
+        // this.fire('cancel-edit-comment-activity', e.detail, {bubbles: false});
+        this.viewEditCommentActivity = false;
+        this.resetVideoLink()
+
+      },
+      _saveEditActivity: function(e) {
+        // this.fire('save-edit-activity', e.detail);
+        this.viewEditActivity = false;
+        this.resetVideoLink()
+
+      },
+      _saveEditCommentActivity: function(e) {
+        // this.fire('save-edit-comment-activity', e.detail, {bubbles: false});
+        this.viewEditCommentActivity = false;
+        this.resetVideoLink()
+
+      },
+
+      resetVideoLink: function() {
+        this.$$('#video-block').resetLinking()
+      },
+
+      startLinking: function(data) {
+        this.$$('#video-block').startLinking(data);
+      },
+      showLinking: function(start, end, tap) {
+        this.$$('#video-block').showLinking(start, end, tap);
+      },
+      _saveLinking: function(e) {
+
+        // this.fire('save-linking', e.detail, {bubbles: false});
+      },
+      _cancelLinking: function() {
+        // this.fire('cancel-linking', {}, {bubbles: false});
+      },
+
+      playSpecific: function(e) {
+        this.$$('#video-block').playSpecific(e);
+      }
+
+    })
+  </script>
+</dom-module>

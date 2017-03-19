@@ -1,0 +1,84 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="hover-document-block">
+  <template>
+    <style include="iron-flex iron-flex-alignment iron-flex-factors">
+      :host {
+        width: 100%;
+      }
+
+      :host #hover-activity {
+        position: relative;
+        width: inherit;
+        overflow-y: auto;
+        background-color: #FFF;
+      }
+    </style>
+
+    <div class="hover-activity" id="hover-activity">
+      <canvas id="hover-canvas" width="500px"></canvas>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'hover-document-block',
+      behaviors: [
+        Polymer.UtilsBehavior
+      ],
+      attached: function() {
+        this._resize();
+        window.addEventListener('resize', this._resize.bind(this))
+      },
+
+      detached: function() {
+        window.removeEventListener('resize', this._resize.bind(this))
+      },
+      _resize: function() {
+        this.$$('#hover-activity').setAttribute('style', `height: ${this.windowSize().height - 64}px`);
+      },
+      setDocument: function(data) {
+        var canvas = this.$$('#hover-canvas');
+        var context = canvas.getContext('2d');
+        var imageObj = new Image();
+        var el = this.$$('#hover-activity');
+        var box = el.getBoundingClientRect()
+        // console.log(box)
+        imageObj.onload = function() {
+          canvas.width = box.width;
+          canvas.height = (this.height / this.width) * canvas.width
+          context.drawImage(this, 0, 0, canvas.width, canvas.height);
+          var oldHeight = data.pageHeight ? data.pageHeight : canvas.height;
+          var oldWidth = data.pageWidth ? data.pageWidth : canvas.width
+          var top = (data.top * canvas.height) / oldHeight;
+          var left = (data.left * canvas.width) / oldWidth;
+          var width = (data.width * canvas.width) / oldWidth;
+          var height = (data.height * canvas.height) / oldHeight;
+
+          if (data.left) {
+            context.beginPath();
+            context.lineWidth="4";
+            context.strokeStyle="red";
+            context.rect(left, top, width, height);
+            context.stroke();
+            setTimeout(function() {
+              if (el) {
+                el.scrollTop = (top - 200);
+                console.log(el.scrollTop)
+              }
+            }.bind(this), 200)
+            // el.scrollTo(0, data.top);
+          }
+        };
+        imageObj.src = data.thumbnail;
+      },
+      closeHover: function() {
+        var canvas = this.$$('#hover-canvas');
+        var context = canvas.getContext('2d');
+        context.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    })
+  </script>
+</dom-module>
+
+

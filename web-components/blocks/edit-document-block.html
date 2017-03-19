@@ -1,0 +1,348 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/hardware-icons.html">
+<link rel="import" href="../project-korero-system-behaviors/project-korero-system-interface-behavior.html">
+<link rel="import" href="../project-korero-system-behaviors/project-korero-system-user-behavior.html">
+<link rel="import" href="../project-korero-system-behaviors/project-korero-system-utils-behavior.html">
+
+<dom-module id="edit-document-block">
+  <template>
+    <style include="iron-flex iron-flex-alignment iron-flex-factors">
+      :host {
+        width: 100%;
+      }
+
+      :host #edit-activity {
+        position: relative;
+        width: inherit;
+        overflow-y: auto;
+        background-color: #fff;
+      }
+      :host #page-left-button {
+        position: fixed;
+        top: 300px;
+        left: 0px;
+      }
+
+      :host #page-right-button {
+        position: fixed;
+        top: 300px;
+        left: 500px;
+      }
+      :host .edit-activity-bottom-div {
+        position: fixed;
+        bottom: 0px;
+        width: 100%;
+        background-color: #FFF;
+      }
+
+      :host #back-canvas {
+        position: absolute;
+        top: 0;
+      }
+      :host .loader-content {
+        position: absolute;
+        width: 100%;
+        top: 50px;
+      }
+
+      :host #spinner {
+        width: 200px;
+        height: 200px;
+      }
+    </style>
+
+    <div class="edit-activity" id="edit-activity">
+      <div class="loader-content horizontal layout">
+        <div class="flex"></div>
+        <div>
+          <paper-spinner id="spinner" active></paper-spinner>
+        </div>
+        <div class="flex"></div>
+      </div>
+
+      <paper-icon-button
+        id="page-left-button"
+        icon="hardware:keyboard-arrow-left"
+        on-tap="pageLeft">
+      </paper-icon-button>
+      <paper-icon-button
+        id="page-right-button"
+        icon="hardware:keyboard-arrow-right"
+        on-tap="pageRight">
+      </paper-icon-button>
+      <div class="edit-activity-bottom-div horizontal layout">
+        <div class="flex"></div>
+
+        <div class="flex">
+          <div class="horizontal layout">
+            <div class="flex"></div>
+            <paper-button
+              id="edit-activity-ok"
+              icon="icons:check"
+              on-tap="saveActivity"
+            >
+              Save
+            </paper-button>
+            <paper-button
+              id="edit-activity-cancel"
+              icon="icons:close"
+              on-tap="cancelActivity"
+            >
+              Cancel
+            </paper-button>
+            <div class="flex"></div>
+          </div>
+
+        </div>
+        <div class="flex-3"></div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'edit-document-block',
+      properties: {
+        boxes: {
+          type: Object,
+        },
+        editor: {
+          type: Boolean,
+          value: false
+        },
+        file: {
+          type: String
+        },
+        pdf: {
+          type: Object
+        },
+        canvas: {
+          type: Object
+        },
+        page: {
+          type: Number,
+          value: 1,
+          observer: 'changedPage'
+        }
+      },
+      behaviors: [
+        KORERO.UtilsBehavior,
+        KORERO.UserBehavior,
+        KORERO.InterfaceBehavior
+      ],
+      attached: function() {
+        this._resize();
+        window.addEventListener('resize', this._resize.bind(this))
+      },
+
+      detached: function() {
+        window.removeEventListener('resize', this._resize.bind(this))
+      },
+      _resize: function() {
+        this.$$('#edit-activity').setAttribute('style', `height: ${this._windowSize().height - 64}px`);
+        this.$$('#page-left-button').setAttribute('style', `top: ${(this._windowSize().height - 64)/2}px`);
+        this.$$('#page-right-button').setAttribute('style', `top: ${(this._windowSize().height - 64)/2}px; left: ${this.$$('#edit-activity').getBoundingClientRect().width - 64}px`);
+      },
+      setDocument: function(data) {
+        var backCanvas = document.createElement('canvas');
+        backCanvas.setAttribute('id', 'back-canvas');
+        backCanvas.setAttribute('width', '500px');
+        var canvas = document.createElement('canvas');
+        canvas.setAttribute('id', 'canvas');
+        canvas.setAttribute('width', '500px');
+        this.boxes = {};
+        this.page = 1;
+
+        if (data.pdf) {
+          Polymer.dom(this.$$('#edit-activity')).insertBefore(backCanvas, this.$$('#page-left-button'));
+          Polymer.dom(this.$$('#edit-activity')).insertBefore(canvas, this.$$('#page-left-button'));
+          this.file = data.file;
+          this.$$('#edit-activity').setAttribute('style', `height: ${this._windowSize().height - 64}px`);
+          this.canvas = new fabric.Canvas(this.$$('#canvas'));
+          this.pdf = data.pdf;
+          this.getPage(this.pdf, this.page);
+          var targetMove = false;
+          var target = null;
+
+          this.canvas.on('mouse:down', function (option) {
+            if (option.target) {
+              target = option.target;
+              this.canvas.on('mouse:move', function (option) {
+                this.boxes[target.id].top = target.top;
+                this.boxes[target.id].left = target.left;
+                this.boxes[target.id].height = target.height;
+                this.boxes[target.id].width = target.width;
+                var canvas = this.$$('#back-canvas');
+                this.boxes[id].thumbnail = canvas.toDataURL();
+                targetMove = true;
+              }.bind(this));
+            } else {
+              var startY = option.e.offsetY;
+              var startX = option.e.offsetX;
+              console.log(option.e)
+              var id;
+              do {
+                id = `${this.page}-${chance.string({pool: 'abcdefghijklmnopqrstuvwxyz'})}`;
+              } while (this.boxes[id]);
+
+              var obj = {
+                top : startY,
+                left : startX,
+                width : 0,
+                height : 0,
+                fill : 'transparent',
+                stroke: 'red',
+                strokewidth: 4,
+                id: id,
+                page: this.page,
+                pageWidth: this.canvas.width,
+                pageHeight: this.canvas.height
+              };
+
+              var rect = new fabric.Rect(obj);
+              this.boxes[id] = obj
+              this.canvas.add(rect);
+
+              this.canvas.on('mouse:move', function (option) {
+                var e = option.e;
+
+
+                this.boxes[id].width = e.offsetX - startX;
+                this.boxes[id].height = (e.offsetY - startY - 64) + this.$$('#edit-activity').scrollTop;
+                // console.log(startY, this.boxes[id].height, e.offsetY, e.screenY, e.screenY - startY - 64, this.$$('#edit-activity').scrollTop)
+                rect.set('width', this.boxes[id].width);
+                rect.set('height', this.boxes[id].height);
+                rect.setCoords();
+                var canvas = this.$$('#back-canvas');
+                this.boxes[id].thumbnail = canvas.toDataURL();
+              }.bind(this));
+            }
+
+            this.canvas.on('mouse:up', function (option) {
+              this.canvas.off('mouse:move');
+              if (!targetMove && target) {
+                delete(this.boxes[target.id]);
+                target.remove();
+              }
+              target = null;
+              targetMove = false;
+            }.bind(this));
+          }.bind(this));
+        }
+      },
+      getPage: function(pdf, number) {
+        pdf.getPage(number).then(function(page) {
+          // you can now use *page* here
+          var viewport = page.getViewport(1);
+          var scale = (this.$$('#edit-activity').getBoundingClientRect().width - 10) / viewport.width;
+          var scaledViewport = page.getViewport(scale);
+
+          var canvas = this.$$('#back-canvas');
+          var context = canvas.getContext('2d');
+          canvas.height = scaledViewport.height;
+          canvas.width = scaledViewport.width;
+          var renderContext = {
+            canvasContext: context,
+            viewport: scaledViewport
+          };
+
+          page.render(renderContext);
+
+          this.canvas.setHeight(scaledViewport.height);
+          this.canvas.setWidth(scaledViewport.width);
+          this.canvas.clear();
+
+          for (var i in this.boxes) {
+            if (this.boxes[i] && number === this.boxes[i].page) {
+              var oldHeight = this.boxes[i].pageHeight ? this.boxes[i].pageHeight : this.canvas.height;
+              var oldWidth = this.boxes[i].pageWidth ? this.boxes[i].pageWidth : this.canvas.width
+              var obj = {
+                top : (this.boxes[i].top * this.canvas.height) / oldHeight ,
+                left : (this.boxes[i].left * this.canvas.width) / oldWidth,
+                width : (this.boxes[i].width * this.canvas.width) / oldWidth,
+                height : (this.boxes[i].height * this.canvas.height) / oldHeight,
+                fill : 'transparent',
+                stroke: 'red',
+                strokewidth: 4,
+              }
+              var rect = new fabric.Rect(obj);
+              this.canvas.add(rect);
+              // console.log(this.boxes[i]);
+            }
+          }
+        }.bind(this));
+      },
+      pageRight: function() {
+        var number = this.page + 1;
+        if (this.pdf && this.pdf.numPages >= number) {
+          this.page = number;
+        }
+      },
+
+      pageLeft: function() {
+        var number = this.page - 1;
+        if (number > 0) {
+          this.page = number;
+        }
+      },
+
+      changedPage: function(number) {
+        if (this.pdf) {
+          this.getPage(this.pdf, number);
+        }
+      },
+
+      cancelActivity: function() {
+        this.closeActivity();
+        this.fire('cancel-edit-activity', {});
+      },
+
+      closeActivity: function() {
+        if (this.$$('#back-canvas')) {
+          Polymer.dom(this.$$('#edit-activity')).removeChild(this.$$('#back-canvas'));
+        }
+        if (this.$$('.canvas-container')) {
+          Polymer.dom(this.$$('#edit-activity')).removeChild(this.$$('.canvas-container'));
+        }
+      },
+
+      saveActivity: function() {
+        var obj = {
+          file: this.file
+        };
+
+        for (var i in this.boxes) {
+          if (this.boxes[i]) {
+            if (!obj.boxes) {
+              obj.boxes = {};
+            }
+            obj.boxes[i] = {};
+            for (var j in this.boxes[i]) {
+              obj.boxes[i][j] = this.boxes[i][j]
+            }
+          }
+        }
+
+        if (!obj.boxes) {
+          var canvas = this.$$('#back-canvas');
+          obj.boxes = {
+            root: {
+              id: 'root',
+              page: 1,
+              thumbnail: canvas.toDataURL()
+            }
+          };
+        }
+
+        this.closeActivity();
+        this.fire('save-edit-activity', obj);
+      },
+    })
+  </script>
+</dom-module>
+
+

@@ -1,0 +1,499 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/polymerfire/firebase-query.html">
+<link rel="import" href="../../bower_components/polymerfire/firebase-document.html">
+<link rel="import" href="../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../bower_components/paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/iron-icons/communication-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../blocks/new-discussion-block.html">
+<link rel="import" href="../blocks/discussion-block.html">
+<link rel="import" href="../blocks/thumbnails-block.html">
+<link rel="import" href="../project-korero-system-behaviors/project-korero-system-interface-behavior.html">
+<link rel="import" href="../project-korero-system-behaviors/project-korero-system-user-behavior.html">
+<link rel="import" href="../project-korero-system-behaviors/project-korero-system-utils-behavior.html">
+
+<dom-module id="discussion-area">
+  <template>
+    <style include="iron-flex iron-flex-alignment iron-flex-factors">
+      :host #discussion-area-content {
+        position: relative;
+        width: 100%;
+        overflow-y: auto;
+      }
+
+      :host .thumbnails-block-container {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        width: 350px;
+        background-color: #FFF;
+      }
+
+      :host #new-discussion-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+      }
+
+      :host #phase3-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+      }
+
+      :host #discussion-area-content h3 {
+        margin: 0;
+        padding: 0;
+        padding-left: 20px;
+        padding-bottom: 20px;
+        padding-top: 10px;
+      }
+
+      :host .filler {
+        height: 500px;
+      }
+
+    </style>
+
+    <firebase-query
+      id="query"
+      path="[[interfacePath.discussions]]/[[interfaceid]]/[[ui]]/discussion"
+      data="{{discussions}}">
+    </firebase-query>
+
+    <firebase-query
+      id="query2"
+      path="[[interfacePath.discussions]]/[[interfaceid]]/[[ui]]/specifics"
+      data="{{specifics}}">
+    </firebase-query>
+
+    <paper-material>
+      <div id="discussion-area-content">
+        <template is="dom-if" if="{{viewNewDiscussionBlock}}">
+          <new-discussion-block
+            id="new-discussion-block"
+            videoid="[[videoid]]"
+            interfaceid="[[interfaceid]]"
+            ui="[[ui]]"
+            task="[[task]]"
+            on-ready-edit-activity="_readyEditActivity"
+            on-edit-activity="_editActivity"
+            on-open-thumbnail-block="_openThumbnailBlock"
+            on-mouseover-node="_mouseoverNode"
+            on-mouseout-node="_mouseoutNode"
+            on-tap-node="_openThumbnailBlock"
+            on-close-thumbnail="_closeThumbnailBlock"
+            on-close-edit-activity="_closeEditActivity"
+            on-start-linking="_startLinking"
+            on-cancel-discussion="_cancelDiscussion"
+            on-save-discussion="_saveDiscussion"
+            user="[[user]]"
+          ></new-discussion-block>
+        </template>
+        <!--<h3 style="padding: 0px; margin: 0px; margin-left: 10px; margin-bottom: 5px; margin-top: 10px">Discussion Threads</h3>-->
+        <template is="dom-repeat" items="{{discussions}}">
+          <!--<template is="dom-if" if="{{checkUI(item.ui, task, item)}}">-->
+            <discussion-block
+              class="discussion-block"
+              id="discussion-{{item.$key}}"
+              discussion="{{item}}"
+              videoid="[[videoid]]"
+              interfaceid="[[interfaceid]]"
+              ui="[[ui]]"
+              task="[[task]]"
+              on-mouseover-node="_openThumbnailBlock"
+              on-mouseout-node="_mouseoutNode"
+              on-tap-node="_openThumbnailBlock"
+              on-close-edit-activity="_closeEditActivity"
+              on-close-edit-comment-activity="_closeEditCommentActivity"
+              on-ready-edit-comment-activity="_readyEditCommentActivity"
+              on-edit-comment-activity="_editCommentActivity"
+              on-open-thumbnail-block="_openThumbnailBlock"
+              on-start-comment-linking="_startLinking"
+              on-change-task-start="_changeTaskStart"
+              participant="[[participant]]"
+              user="[[user]]"
+            ></discussion-block>
+          <!--</template>-->
+        </template>
+        <!--<h3>Specific Discussions</h3>-->
+        <template is="dom-repeat" items="{{specifics}}">
+          <!--<template is="dom-if" if="{{checkUI(item.ui, task, item)}}">-->
+            <discussion-block
+              class="discussion-block"
+              id="discussion-{{item.$key}}"
+              discussion="{{item}}"
+              videoid="[[videoid]]"
+              interfaceid="[[interfaceid]]"
+              ui="[[ui]]"
+              task="[[task]]"
+              on-mouseover-node="_openThumbnailBlock"
+              on-mouseout-node="_mouseoutNode"
+              on-tap-node="_openThumbnailBlock"
+              on-close-edit-activity="_closeEditActivity"
+              on-close-edit-comment-activity="_closeEditCommentActivity"
+              on-ready-edit-comment-activity="_readyEditCommentActivity"
+              on-edit-comment-activity="_editCommentActivity"
+              on-open-thumbnail-block="_openThumbnailBlock"
+              on-start-comment-linking="_startLinking"
+              on-play-specific="_playSpecific"
+              on-change-task-start="_changeTaskStart"
+              participant="[[participant]]"
+              user="[[user]]"
+            ></discussion-block>
+          <!--</template>-->
+        </template>
+        <div class="filler">
+
+        </div>
+        <!--<template is="dom-if" if="{{!_checkPhase3(participant)}}">-->
+          <paper-fab
+            id="new-discussion-button"
+            icon="communication:chat"
+            on-tap="_tapNewDiscussion">
+          </paper-fab>
+          <paper-tooltip
+            for="new-discussion-button"
+            position="left"
+            animation-delay="0">
+            Add Discussion
+          </paper-tooltip>
+        <!--</template>-->
+
+        <!--<template is="dom-if" if="{{_checkPhase3(participant)}}">-->
+
+        <!--</template>-->
+
+        <template is="dom-if" if="{{viewThumbnailBlock}}">
+          <div class="thumbnails-block-container">
+            <thumbnails-block
+              id="thumbnails-block"
+              on-mouseover-thumbnail="_mouseoverThumbnail"
+              on-mouseover-video="_mouseoverVideo"
+              on-mouseout-thumbnail="_mouseoutThumbnail"
+              on-tap-thumbnail="_tapThumbnail"
+              on-tap-video="_tapVideo"
+              on-close-thumbnails-block="_permanentCloseThumbnailBlock"
+              on-open-editor-options="_openEditorOptions"
+              on-remove-thumbnails-block="_removeThumbnailBlock"
+              on-pre-show-thumbnail="_preShowThumbnail">
+            </thumbnails-block>
+          </div>
+        </template>
+      </div>
+    </paper-material>
+
+
+
+    <paper-toast id="toaster"></paper-toast>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'discussion-area',
+      properties: {
+        videoid: {
+          type: String
+        },
+        viewThumbnailBlock: {
+          type: Boolean,
+          value: false
+        },
+        viewHoverThumbnailBlock: {
+          type: Boolean,
+          value: false
+        },
+        permanentThumbnailBlock: {
+          type: Boolean,
+          value: false
+        },
+        viewNewDiscussionBlock: {
+          type: Boolean,
+          value: false
+        },
+        videoStart: {
+          type: Number,
+          notify: true
+        },
+        videoEnd: {
+          type: Number,
+          notify: true
+        },
+        videoTime: {
+          type: Number,
+          notify: true
+        },
+        ui: {
+          type: String
+        },
+        user: {
+          type: Object
+        },
+        task: {
+          type: String,
+          value: 'all'
+        },
+        participant: {
+          type: String,
+          value: 'user'
+        },
+        materials: {
+          type: Object
+        },
+        materialId: {
+          type: String
+        },
+        blockId: {
+          type: String
+        },
+        blockData: {
+          type: Object
+        },
+        taskStart: {
+          type: Number
+        },
+        finishTime: {
+          type: Number
+        }
+      },
+
+      // observers: [
+      //   'check(discussions.splices)'
+      // ],
+      // check(data) {
+      //   console.log(data)
+      //   this.discussions
+      // },
+      behaviors: [
+        KORERO.UtilsBehavior,
+        KORERO.UserBehavior,
+        KORERO.InterfaceBehavior
+      ],
+      attached: function() {
+        this._resize();
+        window.addEventListener('resize', this._resize.bind(this))
+      },
+
+      detached: function() {
+        window.removeEventListener('resize', this._resize.bind(this))
+      },
+
+      checkTask: function(task) {
+        console.log(task)
+        if (task === 'phase1practice') this.blockId = 'demo'
+        else if (task === 'task1') this.blockId = 'b1'
+        else if (task === 'task2') this.blockId = 'b2'
+        else if (task === 'task3') this.blockId = 'b3'
+        else if (task === 'task4') this.blockId = 'b4'
+        console.log(this.blockId)
+      },
+
+      checkBlock: function(blocks, m, ui) {
+        console.log(blocks)
+
+        for (var i in blocks.value) {
+          if (blocks.value[i].material === m && blocks.value[i].interface === ui) {
+            this.blockData = blocks.value[i]
+            console.log(this.blockData)
+            break;
+          }
+        }
+
+      },
+
+      getQuestions: function(question) {
+        var arr = [];
+        for (var i in question) {
+          arr.push({question: question[i], id: i})
+        }
+        return arr;
+
+      },
+
+      checkMaterials: function(m, videoid) {
+        console.log(m, videoid)
+        for (var i in m.value) {
+          if (m.value[i] === videoid) {
+            this.materialId = i;
+            break;
+          }
+        }
+      },
+
+      getUTC: function() {
+        var t = new Date();
+        var y = t.getFullYear();
+        var m = t.getMonth();
+        var d = t.getDate();
+        var h = t.getHours();
+        var min = t.getMinutes();
+        var s = t.getSeconds();
+        var mil = t.getMilliseconds();
+        return Date.UTC(y, m, d, h, min, s, mil);
+      },
+
+
+
+      _changeTaskStart: function(e) {
+        this.taskStart = e.detail.taskStart;
+        this.fire('change-task-start', e.detail);
+      },
+      _resize: function() {
+        this.$$('#discussion-area-content').setAttribute('style', `height: ${this._windowSize().height - 74}px`);
+      },
+      checkUI: function(ui, task, item) {
+        return this.ui === ui && (task === 'all' || task === item.task);
+      },
+      _playSpecific: function(e) {
+        this.fire('play-specific', e.detail, {bubbles: false})
+      },
+      _mouseoverNode: function(e) {
+
+      },
+      _mouseoutNode: function() {
+
+      },
+      _openThumbnailBlock: function(e) {
+        this.viewThumbnailBlock = true;
+        this.permanentThumbnailBlock = e.detail.open;
+        setTimeout(function(){
+          this.$$('#thumbnails-block').setNode(e.detail.node, e.detail.text, e.detail.newDiscussion, e.detail.open, e.detail.discussionid, e.detail.open);
+        }.bind(this), 100);
+      },
+      _mouseoverThumbnail: function(e) {
+        // this.fire('mouseover-thumbnail', e.detail, {bubbles: false});
+      },
+      _mouseoverVideo: function(e) {
+        // this.fire('mouseover-video', e.detail, {bubbles: false});
+      },
+      _mouseoutThumbnail: function() {
+        // this.fire('mouseout-thumbnail', {}, {bubbles: false});
+      },
+      _tapThumbnail: function(e) {
+        // this.fire('tap-thumbnail', e.detail, {bubbles: false});
+      },
+      _tapVideo: function(e) {
+        // this.fire('tap-video', e.detail, {bubbles: false});
+      },
+      _preShowThumbnail: function(e) {
+        this.fire('pre-show-thumbnail', e.detail, {bubbles: false});
+      },
+      _closeThumbnailBlock: function() {
+        this.$$('#thumbnails-block').setPrevious();
+      },
+      _permanentCloseThumbnailBlock: function(e) {
+        if (this.viewThumbnailBlock) {
+          this.$$('#thumbnails-block').setNode();
+          this.viewThumbnailBlock = false;
+        }
+        if (this.viewNewDiscussionBlock) {
+          this.$$('#new-discussion-block').closedThumbnailBlock();
+        }
+
+        if (e && e.detail && e.detail.discussionid) {
+          this.$$('#discussion-'+e.detail.discussionid).closedThumbnailBlock();
+        }
+
+      },
+      _removeThumbnailBlock: function() {
+        this.viewThumbnailBlock = false;
+      },
+      _openEditorOptions: function(e) {
+        if (this.viewNewDiscussionBlock) {
+          this.$$('#new-discussion-block').referMore();
+        } else if (e.detail.discussionid) {
+          this.$$('#discussion-'+e.detail.discussionid).referMore();
+        }
+      },
+      _tapNewDiscussion: function() {
+        this.viewNewDiscussionBlock = true;
+        setTimeout(function(){
+          this.$$('#new-discussion-block').newDiscussion();
+          this.fire('new-discussion', {}, {bubbles: false});
+        }.bind(this), 100);
+
+      },
+      _readyEditActivity: function() {
+        // this.fire('ready-edit-activity', {}, {bubbles: false});
+      },
+      _editActivity: function(e) {
+        // this.fire('edit-activity', e.detail, {bubbles: false});
+      },
+      _closeEditActivity: function() {
+        // this.fire('close-edit-activity', {}, {bubbles: false});
+      },
+      cancelEditActivity: function() {
+        this.$$('#new-discussion-block').cancelEditActivity();
+      },
+      saveEditActivity: function(data) {
+        this.$$('#new-discussion-block').saveEditActivity(data);
+      },
+
+      _readyEditCommentActivity: function() {
+
+        // this.fire('ready-edit-comment-activity', {}, {bubbles: false});
+      },
+      _editCommentActivity: function(e) {
+        // if (e.model) {
+        //   this.fire('edit-comment-activity', e.detail, {bubbles: false});
+        // }
+      },
+      _closeEditCommentActivity: function() {
+        // this.fire('close-edit-comment-activity', {}, {bubbles: false});
+      },
+      cancelEditCommentActivity: function(data) {
+        this.$$('#discussion-'+data.discussionid).cancelEditActivity();
+      },
+      saveEditCommentActivity: function(data) {
+        this.$$('#discussion-'+data.discussionid).saveEditActivity(data);
+      },
+
+      _startLinking: function(e) {
+        // this.fire('start-linking', e.detail, {bubbles: false});
+      },
+
+      saveLinking: function(data) {
+        if (data.discussionid) {
+          this.$$('#discussion-'+data.discussionid).saveLinking(data);
+        } else if (this.viewNewDiscussionBlock) {
+          this.$$('#new-discussion-block').saveLinking(data);
+        }
+      },
+      cancelLinking: function() {
+        if (this.viewNewDiscussionBlock) {
+          this.$$('#new-discussion-block').cancelLinking();
+        }
+      },
+      changeDiscussionTime: function(data) {
+        if (this.viewNewDiscussionBlock) {
+          this.$$('#new-discussion-block').changeDiscussionTime(data);
+        }
+      },
+      changeCommentTime: function(data) {
+        if (data.discussionid) {
+          this.$$('#discussion-'+data.discussionid).changeCommentTime(data);
+        }
+      },
+      _cancelDiscussion: function() {
+        this.viewNewDiscussionBlock = false;
+        this._permanentCloseThumbnailBlock();
+        this.fire('close-discussion', {}, {bubbles: false});
+      },
+      _saveDiscussion: function() {
+        this._cancelDiscussion();
+      },
+      _checkPhase3: function(participant) {
+        return participant === 'phase3'
+      },
+      _openPhase3: function() {
+        this.$$('#phase3Dialog').open();
+      },
+
+    });
+  </script>
+</dom-module>

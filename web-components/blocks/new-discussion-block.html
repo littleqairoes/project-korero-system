@@ -1,0 +1,571 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="thumbnails-block.html">
+<link rel="import" href="../project-korero-system-behaviors/project-korero-system-interface-behavior.html">
+<link rel="import" href="../project-korero-system-behaviors/project-korero-system-user-behavior.html">
+<link rel="import" href="../project-korero-system-behaviors/project-korero-system-utils-behavior.html">
+
+
+<!--<script src="../js/pdf.js"></script>-->
+
+<dom-module id="new-discussion-block">
+  <template>
+    <style include="iron-flex iron-flex-alignment iron-flex-factors">
+      :host .text .hover {
+        text-decoration: underline;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      :host .text .hover:hover {
+        background-color: yellow;
+      }
+
+      :host .title {
+        margin: 0;
+        padding: 0;
+      }
+
+      :host .text {
+        font-size: 0.8em;
+      }
+
+      :host #new-discussion-block-content {
+        padding: 20px;
+        padding-top: 0px;
+      }
+
+      :host #text {
+        min-height: 20px;
+        padding: 10px;
+        background-color: #FFF;
+      }
+
+      :host #options {
+        position: absolute;
+        background-color: #FFF;
+        z-index: 10;
+        padding: 15px;
+      }
+
+      :host .refer {
+        background-color: yellow;
+      }
+
+      :host .text .hover {
+        text-decoration: underline;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      :host .text .hover:hover {
+        background-color: yellow;
+      }
+
+      :host .time {
+        padding: 10px;
+      }
+
+      :host #thumbnails-block {
+        position: fixed;
+        width: 400px;
+        background-color: #FFF;
+      }
+
+    </style>
+
+    <paper-material>
+      <div class="time">
+        <template is="dom-if" if="{{!discussion.videolink}}">
+          Global: <iron-icon icon="icons:language"></iron-icon>
+        </template>
+        <template is="dom-if" if="{{discussion.videolink}}">
+          Specific: <iron-icon icon="icons:radio-button-checked"></iron-icon> [[timeToString(discussion.start)]] - [[timeToString(discussion.end)]]
+        </template>
+      </div>
+      <div id="new-discussion-block-content" >
+        <paper-input label="Thread title here..." id="title"></paper-input>
+        <div
+          id="text"
+          class="text"
+          contenteditable
+          on-tap="commentChange"
+          on-track="commentChange"
+          on-keydown="commentChange">
+        </div>
+        <div class="">
+          <paper-button on-tap="cancel">
+            Cancel
+          </paper-button>
+          <paper-button on-tap="post">
+            Post
+          </paper-button>
+        </div>
+        <paper-material id="options">
+          <template is="dom-if" if="{{viewOptions}}">
+            <paper-icon-button
+              icon="editor:format-bold"
+              on-tap="bold">
+            </paper-icon-button>
+            <paper-icon-button
+              icon="editor:format-italic"
+              on-tap="italics">
+            </paper-icon-button>
+            <paper-icon-button
+              icon="editor:insert-drive-file"
+              on-tap="refer">
+            </paper-icon-button>
+          </template>
+          <template is="dom-if" if="{{viewRefer}}">
+            <div class="refer-view">
+              <b>Refer this term to:</b><br/>
+              <template is="dom-if" if="{{isKorero(ui)}}">
+                <paper-button raised on-tap="linkvideo" style="font-size: 0.7em">This Lecture Video</paper-button><br/>
+              </template>
+              <paper-input label="Link other materials" accept="application/pdf" id="external" type="file"></paper-input>
+              <paper-button raised on-tap="link">Upload Materials</paper-button><br/>
+              <!--<paper-input label="Link other materials" id="external"></paper-input>
+              <paper-button raised on-tap="link" style="font-size: 0.7em">Link Materials</paper-button><br/>-->
+            </div>
+          </template>
+        </paper-material>
+      </div>
+    </paper-material>
+
+    <template is="dom-if" if="{{viewThumbnailBlock}}">
+      <thumbnails-block
+        id="thumbnails-block"
+        on-close-thumbnails-block="_mouseoutNode"
+        >
+      </thumbnails-block>
+    </template>
+
+
+    <paper-toast id="toaster"></paper-toast>
+
+
+  </template>
+
+  <script>
+    Polymer({
+      is: 'new-discussion-block',
+      properties: {
+        discussion: {
+          type: Object,
+        },
+        selected: {
+          type: Object
+        },
+        node: {
+          type: Object
+        },
+        viewOptions: {
+          type: Boolean,
+          value: false
+        },
+        viewRefer: {
+          type: Boolean,
+          value: false
+        },
+        videoid: String,
+        ui: String,
+        user: {
+          type: Object
+        },
+        viewThumbnailBlock: {
+          type: Boolean,
+          value: false
+        },
+        task: {
+          type: String
+        }
+      },
+
+      listeners: {
+        'mouseout': '_mouseoutNode'
+      },
+
+      behaviors: [
+        KORERO.UtilsBehavior,
+        KORERO.UserBehavior,
+        KORERO.InterfaceBehavior
+      ],
+
+      timeToString: function(time) {
+        return parseInt(time / 60, 10) + ':' + (parseInt(time % 60, 10) < 10 ? '0' : '') + parseInt(time % 60, 10);
+      },
+
+      isKorero: function(ui) {
+        return ui === 'korero';
+      },
+
+      newDiscussion: function() {
+        this.discussion = {
+          title: '',
+          text: '',
+          nodes: {},
+          videolink: false,
+          ui: this.ui
+        };
+        this.$$('#title').value = '';
+        this.$$('#text').innerHTML = '';
+        this.$$('#options').setAttribute('style', 'display: none');
+      },
+
+      commentChange: function(e) {
+        // console.log(e)
+        if (this.node) {
+          this.checkNode();
+        }
+        // e.target.focus();
+        this.selected = this.showSelectionDiv();
+        this.viewOptions = false;
+        this.viewRefer = true;
+        this.openHover();
+      },
+
+      checkNode: function() {
+        if (this.node) {
+          var nodeId = this.node.getAttribute('data-node-id');
+          var hasNode = false;
+          for (var i in this.discussion.nodes[nodeId].refers) {
+            if (this.discussion.nodes[nodeId].refers[i]) {
+              hasNode = true;
+              break;
+            }
+          }
+          console.log(hasNode, this.selected)
+          if (!hasNode && this.selected) {
+            this.selected.range.deleteContents();
+            this.selected.range.insertNode(document.createTextNode(this.node.innerHTML));
+            this.selected = null;
+            this.fire('close-edit-activity', {});
+            this.node = null;
+          } else {
+            this.fire('close-thumbnail', {});
+          }
+        }
+      },
+
+      openHover: function(flag) {
+        if (this.selected.text && this.selected.text.length > 0) {
+          var elRect = this.$$('#new-discussion-block-content').getBoundingClientRect();
+          var top = (this.selected.pos.top - elRect.top) + this.selected.pos.height + 64;
+          var left = (this.selected.pos.left) - elRect.left;
+          if (elRect.width - left < 200) {
+            left = elRect.width - 200;
+          }
+          this.$$('#options').setAttribute('style', `top: ${top}px; left: ${left}px; display: block`);
+          if (!flag) this.refer();
+        } else {
+          this.$$('#options').setAttribute('style', `display: none`);
+          // // this.selected.range.setStartAfter(e.target);
+          // this.selected.range.collapse(true);
+          // var range = this.selected.range;
+          // this.selected.selected.removeAllRanges();
+          // this.selected.selected.addRange(range);
+          // e.target.parentNode.focus();
+        }
+      },
+
+      bold: function(e) {
+        if (this.selected.text && this.selected.text.length > 0) {
+          var node = document.createElement('b');
+          node.innerHTML = this.selected.text;
+          this.selected.range.deleteContents();
+          this.selected.range.insertNode(node);
+          this.$$('#options').setAttribute('style', `display: none`);
+        }
+      },
+
+      italics: function(e) {
+        if (this.selected.text && this.selected.text.length > 0) {
+          var node = document.createElement('i');
+          node.innerHTML = this.selected.text;
+          this.selected.range.deleteContents();
+          this.selected.range.insertNode(node);
+          this.$$('#options').setAttribute('style', `display: none`);
+        }
+      },
+
+      refer: _.debounce(function() {
+        if (this.selected.text && this.selected.text.length > 0) {
+          this.node = document.createElement('span');
+          this.node.innerHTML = this.selected.text;
+          this.node.classList = ['refer'];
+          var id = chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 10});
+          this.node.setAttribute('data-node-id', id)
+          this.discussion.nodes[id] = {
+            refers: {}
+          };
+          this.selected.range.deleteContents();
+          // this.selected.range.insertNode(document.createElement('span').innerHTML=" ");
+          var node = document.createElement('span');
+          node.innerHTML='&#8203;'
+          this.selected.range.insertNode(node);
+          this.selected.range.insertNode(this.node);
+
+          this.viewOptions = false;
+          this.viewRefer = true;
+        }
+      }, 200),
+
+      referMore: function() {
+        this.viewOptions = false;
+        this.viewRefer = true;
+        this.openHover(true);
+      },
+
+      link: function(e) {
+        this.referViewerPdf = null;
+
+        if (this.ui === 'korero') {
+          this.fire('ready-edit-activity', {});
+          var file = this.$$('#external').inputElement.files[0];
+          this.$.toaster.show('Uploading...');
+          var task = firebase.storage().ref(this.interfacePath.discussions + '/'+ this.interfaceid +'/'+file.name).put(file);
+          task.on('state_changed', function(snapshot){
+
+          }, this._catchError.bind(this), function() {
+            PDFJS.getDocument(task.snapshot.downloadURL).then(function(pdf){
+              this.$$('#toaster').show('Upload complete');
+              this.fire('edit-activity', {pdf: pdf, file: task.snapshot.downloadURL});
+              this.$$('#external').value = '';
+              this.$$('#options').setAttribute('style', `display: none`);
+            }.bind(this)).catch(function(err){
+              console.log(err);
+              this.$.toaster.show(err.message);
+            }.bind(this));
+            this.viewOptions = false;
+            this.viewRefer = true;
+          }.bind(this))
+
+
+        } else {
+          this.$$('#options').setAttribute('style', `display: none`);
+          var nodeId = this.node.getAttribute('data-node-id');
+          var referId = null;
+          do {
+            referId = chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 10});
+          } while (this.discussion.nodes[nodeId].refers[referId]);
+          // console.log(data);
+
+          var task = firebase.storage().ref(this.interfacePath.discussions + '/'+ this.interfaceid +'/'+file.name).put(file);
+          task.on('state_changed', function(snapshot){
+
+          }, this._catchError.bind(this), function() {
+            this.discussion.nodes[nodeId].refers[referId] = {
+              file: task.snapshot.downloadURL,
+              boxes: {
+                root: {
+                  id: 'root',
+                  page: 1
+                }
+              }
+            };
+
+            this.node.classList = ['hover'];
+            this.node.addEventListener('mouseover', this._mouseoverNode.bind(this));
+            // this.node.addEventListener('mouseout', this._mouseoutNode.bind(this));
+            this.node.addEventListener('tap', this._tapNode.bind(this));
+            this.node = null;
+          }.bind(this))
+
+        }
+
+      },
+
+      linkvideo: function(e) {
+        this.fire('start-linking', {});
+        this.viewOptions = false;
+        this.viewRefer = true;
+        this.$$('#options').setAttribute('style', `display: none`);
+      },
+
+      cancelEditActivity: function() {
+        this.checkNode();
+      },
+
+      saveEditActivity: function(data) {
+        var nodeId = this.node.getAttribute('data-node-id');
+        var referId = null;
+        do {
+          referId = chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 10});
+        } while (this.discussion.nodes[nodeId].refers[referId]);
+        // console.log(data);
+        this.discussion.nodes[nodeId].refers[referId] = data;
+        this.fire('open-thumbnail-block', {node: this.discussion.nodes[nodeId], text: this.node.innerHTML, newDiscussion: true, open: true})
+      },
+
+      closedThumbnailBlock: function() {
+        if (this.node) {
+          var nodeId = this.node.getAttribute('data-node-id');
+          var flag = false;
+          // console.log(this.discussion.nodes[nodeId]);
+          for (var i in this.discussion.nodes[nodeId].refers) {
+            if (this.discussion.nodes[nodeId].refers[i]) {
+              flag = true;
+              break;
+            }
+          }
+          if (flag) {
+            this.node.classList = ['hover'];
+            this.node.addEventListener('mouseover', this._mouseoverNode.bind(this));
+            // this.node.addEventListener('mouseout', this._mouseoutNode.bind(this));
+            this.node.addEventListener('tap', this._tapNode.bind(this));
+            this.node = null;
+          }
+          // } else {
+          //   // delete(this.discussion.nodes[nodeId]);
+          // }
+        }
+      },
+
+      _mouseoverNode: function(e) {
+        this._mouseoutNode();
+        if (this.ui === 'korero') {
+          var nodeId = e.target.getAttribute('data-node-id');
+          var element = e.target;
+          var box = e.target.getBoundingClientRect();
+          // console.log(box);
+          var node = this.discussion.nodes[nodeId];
+          this.viewThumbnailBlock = true;
+          setTimeout(function(){
+            this.$$('#thumbnails-block').setNode(node, element.innerHTML, false, false);
+            this.$$('#thumbnails-block').setAttribute('style', `left: ${box.left - 200}px; top: ${box.top + 20}px; z-index: 100`);
+          }.bind(this), 100);
+          // this.fire('mouseover-node', {node: node, text: e.target.innerHTML});
+        }
+      },
+      _mouseoutNode: function(e) {
+        if (this.viewThumbnailBlock) {
+          this.$$('#thumbnails-block').setNode();
+        }
+        this.viewThumbnailBlock = false;
+        // this.fire('mouseout-node', {});
+      },
+
+      // _mouseoverNode: function(e) {
+      //   if (this.isKorero(this.ui)) {
+      //     var nodeId = e.target.getAttribute('data-node-id');
+      //     var node = this.discussion.nodes[nodeId];
+      //     console.log(node);
+      //     this.fire('mouseover-node', {node: node, text: e.target.innerHTML});
+      //   }
+
+      // },
+      // _mouseoutNode: function(e) {
+      //   this.fire('mouseout-node', {});
+      // },
+      _tapNode: function(e) {
+        this._mouseoutNode();
+        var nodeId = e.target.getAttribute('data-node-id');
+        var node = this.discussion.nodes[nodeId];
+        if (this.isKorero(this.ui)) {
+          this.closedThumbnailBlock();
+          this.fire('close-edit-activity', {});
+          this.fire('tap-node', {node: node, text: e.target.innerHTML, open: true});
+        } else {
+          for (var i in node.refers) {
+            if (node.refers[i]) {
+              window.open(node.refers[i].file);
+              break;
+            }
+          }
+        }
+      },
+
+      saveLinking: function(data) {
+        var nodeId = this.node.getAttribute('data-node-id');
+        var referId = null;
+        do {
+          referId = chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 10});
+        } while (this.discussion.nodes[nodeId].refers[referId]);
+        this.discussion.nodes[nodeId].refers[referId] = {
+          boxes: {
+            root: data
+          }
+        };
+        this.fire('open-thumbnail-block', {node: this.discussion.nodes[nodeId], text: this.node.innerHTML, newDiscussion: true, open: true})
+      },
+
+      changeDiscussionTime: function(data) {
+        console.log(data);
+        if (data.discussionstart != undefined || data.discussionstart != null) {
+          this.set('discussion.videolink', true);
+          // this.discussion.videolink = true
+        } else {
+          this.set('discussion.videolink', false);
+          // this.discussion.videolink = false
+        }
+        this.set('discussion.start', data.discussionstart);
+        this.set('discussion.end', data.discussionend);
+        // this.discussion.start = data.discussionstart;
+        // this.discussion.end = data.discussionend;
+        console.log(this.discussion)
+      },
+
+      cancel: function() {
+        this.$$('#options').setAttribute('style', `display: none`);
+        this.fire('cancel-discussion', {});
+      },
+
+      getUTC: function() {
+        var t = new Date();
+        var y = t.getFullYear();
+        var m = t.getMonth();
+        var d = t.getDate();
+        var h = t.getHours();
+        var min = t.getMinutes();
+        var s = t.getSeconds();
+        var mil = t.getMilliseconds();
+        return Date.UTC(y, m, d, h, min, s, mil);
+      },
+
+      post: function() {
+        this.closedThumbnailBlock();
+        this.$.toaster.show('Saving');
+        // console.log(this.$$('#text').innerHTML)
+        this.set('discussion.title', this.$$('#title').value);
+        this.set('discussion.text', this.$$('#text').innerHTML);
+        this.set('discussion.user', this.user.uid);
+        this.set('discussion.task', this.task);
+        this.set('discussion.createdOn', this.getUTC());
+
+        // if (this.user.displayName) {
+        //   this.set('discussion.participantNumber', this.user.displayName);
+        // }
+
+        console.log(this.discussion)
+        var updates = {};
+        var key = firebase.database().ref(this.interfacePath.activity).push().key;
+
+        var ref = this.discussion.videolink ? this.interfacePath.discussions + '/' + this.interfaceid + "/" + this.ui + "/specifics/" + chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 20}) :
+          this.interfacePath.discussions +  '/' + this.interfaceid + "/" + this.ui + "/discussion/" + chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 20})
+
+        updates[ref] = this.discussion;
+        updates[this.interfacePath.activity + '/' + key] = {
+          ref: ref
+        }
+
+        firebase.database().ref().update(updates).then(function(){
+          this.$.toaster.show('Saved');
+          this.$$('#options').setAttribute('style', `display: none`);
+          this.fire('save-discussion', {});
+        }.bind(this)).catch(function(err){
+          this.$.toaster.show(err.message);
+        }.bind(this));
+      },
+      _removeThumbnailBlock: function() {
+
+      },
+    })
+  </script>
+</dom-module>

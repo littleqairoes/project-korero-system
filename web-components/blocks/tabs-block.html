@@ -1,0 +1,168 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<!--<script src="../js/pdf.js"></script>-->
+
+<dom-module id="tabs-block">
+  <template>
+    <style include="iron-flex iron-flex-alignment iron-flex-factors">
+      :host #thumbnails-block-content {
+        padding: 10px;
+      }
+
+      :host .container {
+        overflow-x: auto;
+        width: 100%;
+      }
+
+      :host img {
+        height: 100px;
+        border: 1px solid black;
+        cursor: pointer;
+      }
+
+      :host img:hover {
+        border: 1px solid red;
+      }
+
+      :host .quote {
+        font-size: 0.8em;
+      }
+    </style>
+
+    <div id="thumbnails-block-content">
+      <div class="horizontal layout container">
+        <paper-material>
+
+        </paper-material>
+        <template is="dom-repeat" items="{{boxes}}">
+          <paper-material>
+            <img
+              class="thumbnail"
+              src="[[item.thumbnail]]"
+              data-index$="[[index]]"
+              on-mouseover="_mouseoverThumbnail"
+              on-mouseout="_mouseoutThumbnail"
+              on-tap="_tapThumbnail"
+            >
+          </paper-material>
+        </template>
+      </div>
+    </div>
+    <paper-toast id="toaster"></paper-toast>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'tabs-block',
+      properties: {
+        boxes: {
+          type: Object,
+        },
+        editor: {
+          type: Boolean,
+          value: false
+        },
+        previousboxes: {
+          type: Object
+        },
+        permanent: {
+          type: Boolean
+        },
+        text: {
+          type: String
+        },
+        previoustext: {
+          type: String
+        },
+        previousNewDiscussion: {
+          type: Boolean
+        },
+        hover: {
+          type: Boolean
+        }
+      },
+      setPrevious: function() {
+        if (this.permanent) {
+          this.hover = this.permanent;
+          this.text = this.previoustext
+          this.editor = this.previousNewDiscussion
+          this.boxes = [];
+          for (var i in this.previousboxes) {
+            this.push('boxes', this.previousboxes[i]);
+          }
+        } else {
+          this.setNode();
+        }
+      },
+      setNode: function(node, text, newDiscussion, p) {
+        this.text = text;
+        this.boxes = [];
+        this.hover = p;
+        this.editor = newDiscussion;
+
+        if (node) {
+          for (var i in node.refers) {
+            for (var j in node.refers[i].boxes) {
+              var obj = {
+                referId: i,
+                boxId: j,
+                thumbnail: node.refers[i].boxes[j].thumbnail,
+                file: node.refers[i].file,
+                top: node.refers[i].boxes[j].top,
+                left: node.refers[i].boxes[j].left,
+                width: node.refers[i].boxes[j].width,
+                height: node.refers[i].boxes[j].height,
+              };
+              this.push('boxes', obj);
+            }
+          }
+          if (p) {
+            this.previousboxes = [];
+            this.previoustext = text;
+            this.previousNewDiscussion = newDiscussion;
+            this.permanent = p;
+            for (var k in this.boxes) {
+              this.push('previousboxes', {
+                referId: this.boxes[k].referId,
+                boxId: this.boxes[k].boxId,
+                thumbnail: this.boxes[k].thumbnail,
+                file: this.boxes[k].file,
+                top: this.boxes[k].top,
+                left: this.boxes[k].left,
+                width: this.boxes[k].width,
+                height: this.boxes[k].height
+              });
+            }
+          }
+        } else {
+          this.permanent = false;
+          this.fire('remove-thumbnails-block', {}, {bubbles: false});
+        }
+      },
+      _mouseoverThumbnail: function(e) {
+        this.fire('mouseover-thumbnail', this.boxes[e.target.getAttribute('data-index')], {bubbles: false});
+      },
+      _mouseoutThumbnail: function(e) {
+        this.fire('mouseout-thumbnail', {}, {bubbles: false});
+      },
+      _tapThumbnail: function(e) {
+        this.fire('pre-show-thumbnail', this.boxes[e.target.getAttribute('data-index')], {bubbles: false});
+        PDFJS.getDocument(this.boxes[e.target.getAttribute('data-index')].file).then(function(pdf){
+          this.fire('tap-thumbnail', {pdf: pdf, boxes: this.boxes[e.target.getAttribute('data-index')]}, {bubbles: false});
+        }.bind(this)).catch(function(err){
+          console.log(err);
+          this.$.toaster.show(err.message);
+        }.bind(this));
+      },
+      _closeThumbnailsBlock: function(e) {
+        this.permanent = false;
+        this.fire('close-thumbnails-block', {}, {bubbles: false});
+      },
+      _openEditorOptions: function() {
+        this.fire('open-editor-options', {}, {bubbles: false});
+      }
+    })
+  </script>
+</dom-module>

@@ -117,7 +117,7 @@
       ],
 
       observers: [
-        '_saveLinking(state.saveLinking, state.discussionId)'
+        'saveLinking(state.saveLinking, state.discussionId)'
       ],
 
       attached: function() {
@@ -166,12 +166,13 @@
           this.checkNode();
         }
         this.selected = this.showSelectionDiv();
-        this.viewOptions = false;
-        this.viewRefer = true;
+        this.viewOptions = true;
+        this.viewRefer = false;
         this.openHover();
       },
 
       checkNode: function() {
+        console.log(this.node)
         if (this.node) {
           var nodeId = this.node.id;
           var hasNode = false;
@@ -217,6 +218,7 @@
           handleClick: function(event) {
             // console.log(self.state.discusssionSelected);
             // console.log(self.state.discussionSelected.text)
+            // self.debounce('refer', self.refer, 500);
             self.refer();
           }
         })
@@ -230,6 +232,9 @@
           this._editor.pasteHTML('<mark id=' + id + '>' + text + '</mark>&#8203;');
           this.$$('#' + id).classList.add('new-discussion-link');
           this.node = this.$$('#' + id);
+          this.discussion.nodes[id] = {
+            refers: {}
+          };
           this.viewOptions = false;
           this.viewRefer = true;
           // this.emitAction({type: KORERO.Actions.SET_REFER_VIEW, referView: true});
@@ -238,12 +243,14 @@
       },
 
       referMore: function() {
+        console.log('refer mmore')
         this.viewOptions = false;
         this.viewRefer = true;
-        this.openHover(true);
+        // this.refer(true);
       },
 
       openHover: function(flag) {
+        var selected = this.selected;
         if (this.selected.text && this.selected.text.length > 0) {
           var elRect = this.$$('.new-discussion-container').getBoundingClientRect();
           var top = (selected.pos.top - elRect.top) + selected.pos.height;
@@ -253,7 +260,8 @@
           }
           this.$$('.toolbar').setAttribute('style', `top: ${top}px; left: ${left}px`);
           this.$$('.toolbar-refer').setAttribute('style', `top: ${top}px; left: ${left}px`);
-          if (!flag) this.refer();
+
+          // if (!flag) this.refer();
         } else {
           this.viewOptions = false;
           this.viewRefer = false;
@@ -368,6 +376,8 @@
             root: data
           }
         };
+
+        console.log('savelinking-new-discussion')
 
         this.emitAction({
           type: KORERO.Actions.OPEN_THUMBNAIL_BLOCK,

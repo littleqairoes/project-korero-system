@@ -74,29 +74,29 @@
       },
 
       [KORERO.Actions.CLOSE_THUMBNAIL](details) {
-        this.set('state.closeThumbnail', this.eventFire());
+        this.set('state.closeThumbnails', this.eventFire());
       },
 
-      [KORERO.Actions.READY_EDIT_ACTIVITY](detials) {
+      [KORERO.Actions.READY_EDIT_ACTIVITY](details) {
         this.set('state.readyEditActivity', this.eventFire());
       },
 
-      [KORERO.Actions.EDIT_ACTIVITY](detials) {
+      [KORERO.Actions.EDIT_ACTIVITY](details) {
         this.set('state.editActivity', this.eventFire());
-        this.set('state.editActivityData', this.eventFire());
+        this.set('state.editActivityData', details.data);
       },
 
-      [KORERO.Actions.OPEN_THUMBNAIL_BLOCK](detials) {
+      [KORERO.Actions.OPEN_THUMBNAIL_BLOCK](details) {
         this.set('state.openThumbnailBlock', this.eventFire());
         this.set('state.openThumbnailBlockData', details.data)
       },
 
-      [KORERO.Actions.TAP_NODE](detials) {
+      [KORERO.Actions.TAP_NODE](details) {
         this.set('state.tapNode', this.eventFire());
         this.set('state.tapNodeData', details.data)
       },
 
-      [KORERO.Actions.SAVE_DISCUSSION](detials) {
+      [KORERO.Actions.SAVE_DISCUSSION](details) {
         this.set('state.saveDiscussion', this.eventFire());
       },
 
@@ -106,6 +106,19 @@
 
       [KORERO.Actions.CLOSE_DISCUSSION](details) {
         this.set('state.closeDiscussion', this.eventFire());
+      },
+
+      [KORERO.Actions.OPEN_EDITOR_OPTIONS](details) {
+        this.set('state.openEditorOptions', this.eventFire());
+        this.set('state.openEditorOptionsData', details.data)
+      },
+
+      [KORERO.Actions.CLOSE_THUMBNAILS_BLOCK](details) {
+        this.set('state.closeThumbnailsBlockData', details.data);
+      },
+
+      [KORERO.Actions.REMOVE_THUMBNAILS_BLOCK](details) {
+        this.set('state.removeThumbnailsBlock')
       }
 
     });

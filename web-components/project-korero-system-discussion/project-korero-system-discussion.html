@@ -32,12 +32,12 @@
 
     <paper-material class="create-discussion-container" id="create-discussion-container">
       <template is="dom-if" if="[[newDiscussion]]">
-        <project-korero-system-new-discussion id="new-discussion-block" user="[[user]]"></project-korero-system-new-discussion>
+        <project-korero-system-new-discussion id="new-discussion-block" user="[[user]]" ui="korero"></project-korero-system-new-discussion>
       </template>
     </paper-material>
 
     <!-- add thumbnails -->
-    <template is="dom-if" if="{{viewThumbnailsBlock}}">
+    <template is="dom-if" if="{{viewThumbnailBlock}}">
       <project-korero-system-thumbnails
         id="thumbnails-block">
       </project-korero-system-thumbnails>
@@ -73,13 +73,15 @@
       ],
 
       observers: [
-        'saveLinking(state.saveLinkingData, state.saveLinking)',
+        'saveLinking(state.saveLinkingData)',
         'cancelLinking(state.cancelLinking)',
-        'changeDiscussionTime(state.changeDiscussionTimeData, state.changeDiscussionTime)',
-        'changeCommentTime(state.changeCommentTimeData, state.changeCommentTime)',
+        'changeDiscussionTime(state.changeDiscussionTimeData)',
+        'changeCommentTime(state.changeCommentTimeData)',
         '_closeThumbnailBlock(state.closeThumbnail)',
-        '_openThumbnailBlock(state.openThumbnailBlockData, state.openThumbnailBlock)',
-        '_saveDiscussion(state.saveDiscussion)'
+        '_permanentCloseThumbnailBlock(state.closeThumbnailsBlockData)',
+        '_openThumbnailBlock(state.openThumbnailBlockData)',
+        '_saveDiscussion(state.saveDiscussion)',
+        '_openEditorOptions(state.openEditorOptionsData)'
       ],
 
       openCreateDiscussion: function() {
@@ -103,9 +105,9 @@
       },
 
       cancelLinking: function() {
-        if (this.newDiscussion) {
-          this.$$('#new-discussion-block').cancelLinking();
-        }
+        // if (this.newDiscussion) {
+        //   this.$$('#new-discussion-block').cancelLinking();
+        // }
       },
 
       changeDiscussionTime: function(data) {
@@ -115,21 +117,27 @@
       },
 
       changeCommentTime: function(data) {
-        if (data.discussionid) {
+        if (data && data.discussionid) {
           this.$$('#discussion-'+data.discussionid).changeCommentTime(data);
         }
       },
 
       _openThumbnailBlock: function(data) {
-        this.viewThumbnailBlock = true;
-        this.permanentThumbnailBlock = data.open;
-        Polymer.RenderStatus.AfterNextRender(this, function(){
-          this.$$('#thumbnails-block').setNode(data.node, data.text, data.newDiscussion, data.open, data.discussionid, data.open);
-        });
+        if (data) {
+          this.viewThumbnailBlock = true;
+          this.permanentThumbnailBlock = data.open;
+          Polymer.RenderStatus.afterNextRender(this, function(){
+            this.$$('#thumbnails-block').setNode(data.node, data.text, data.newDiscussion, data.open, data.discussionid, data.open);
+          });
+        }
+
       },
 
       _closeThumbnailBlock: function() {
-        this.$$('#thumbnails-block').setPrevious();
+        if (this.$$('#thumbnails-block')) {
+          this.$$('#thumbnails-block').setPrevious();
+        }
+
       },
 
       _permanentCloseThumbnailBlock: function(data) {
@@ -137,11 +145,11 @@
           this.$$('#thumbnails-block').setNode();
           this.viewThumbnailBlock = false;
         }
-        if (this.viewNewDiscussionBlock) {
+        if (this.newDiscussion) {
           this.$$('#new-discussion-block').closedThumbnailBlock();
         }
 
-        if (data.discussionid) {
+        if (data && data.discussionid) {
           this.$$('#discussion-'+data.discussionid).closedThumbnailBlock();
         }
 
@@ -149,11 +157,11 @@
       _removeThumbnailBlock: function() {
         this.viewThumbnailBlock = false;
       },
-      _openEditorOptions: function(e) {
-        if (this.viewNewDiscussionBlock) {
+      _openEditorOptions: function(data) {
+        if (this.newDiscussion) {
           this.$$('#new-discussion-block').referMore();
-        } else if (e.detail.discussionid) {
-          this.$$('#discussion-'+e.detail.discussionid).referMore();
+        } else if (data && data.discussionid) {
+          this.$$('#discussion-'+data.discussionid).referMore();
         }
       },
 
@@ -161,20 +169,22 @@
         this.$$('#new-discussion-block').cancelEditActivity();
       },
       saveEditActivity: function(data) {
-        this.$$('#new-discussion-block').saveEditActivity(data);
+        if (data) {
+          this.$$('#new-discussion-block').saveEditActivity(data);
+        }
       },
 
       cancelEditCommentActivity: function(data) {
-        this.$$('#discussion-'+data.discussionid).cancelEditActivity();
+        if (data) this.$$('#discussion-'+data.discussionid).cancelEditActivity();
       },
       saveEditCommentActivity: function(data) {
-        this.$$('#discussion-'+data.discussionid).saveEditActivity(data);
+        if (data) this.$$('#discussion-'+data.discussionid).saveEditActivity(data);
       },
 
 
 
       _cancelDiscussion: function() {
-        this.viewNewDiscussionBlock = false;
+        this.newDiscussion = false;
         this._permanentCloseThumbnailBlock();
         this.emitAction({
           type: KORERO.Actions.CLOSE_DISCUSSION

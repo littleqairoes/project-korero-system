@@ -24,6 +24,7 @@
 
     <firebase-document path="[[interfacePath.videos]]/[[state.interfaceId]]" data="{{video}}"></firebase-document>
 
+    <!--<template is="dom-if" if="[[video.videoId]]">-->
       <div class="container" id="container-panel">
         <div class="horizontal layout center">
           <div class="flex" id="container-video">
@@ -32,8 +33,8 @@
                 id="video-content"
                 video-id="[[video.videoId]]"
                 chromeless
-                on-google-youtube-ready="_videoReady"
-                on-goolge-youtube-state-change="_stateChange"
+                on-google-youtube-ready="videoReady"
+                on-google-youtube-state-change="stateChange"
                 currenttime="{{videotime}}"
                 duration="{{videoduration}}"
                 currenttimeformatted="{{videoShowTime}}"></google-youtube>
@@ -92,17 +93,17 @@
                   <paper-icon-button
                     id="linking-ok"
                     icon="default:check"
-                    on-tap="_saveLinking"></paper-icon-button>
+                    on-tap="saveLinking"></paper-icon-button>
                 </template>
 
                 <paper-icon-button
                   id="linking-cancel"
                   icon="default:close"
-                  on-tap="_cancelLinking"></paper-icon-button>
+                  on-tap="cancelLinking"></paper-icon-button>
 
                 <template is="dom-if" if="{{linkingEdit}}">
                   <paper-button
-                    on-tap="_addSegment">
+                    on-tap="addSegment">
                     + Add one more segment
                   </paper-button>
                 </template>
@@ -248,7 +249,10 @@
       },
 
       pause: function() {
-        this.$$('#video-content').pause()
+        if (this.$$('#video-content')) {
+          this.$$('#video-content').pause()
+        }
+
       },
 
       scrub: function(e) {
@@ -444,8 +448,8 @@
           this.discussionstart = this.videotime;
           this.discussionend = this.videotime;
           // this.discussionend = this.discussionstart + (this.videoduration * 0.05);
-          this.visualstart = this.timeToString(this.discussionstart);
-          this.visualend = this.timeToString(this.discussionend);
+          this.visualstart = this._timeToString(this.discussionstart);
+          this.visualend = this._timeToString(this.discussionend);
           this.changeDiscussionTime();
           this.$$('#video-content').seekTo(this.discussionstart);
         }
@@ -457,8 +461,8 @@
         this.commentlink = true;
         this.commentstart = this.videotime;
         this.commentend = this.videotime;
-        this.visualstart = this.timeToString(this.commentstart);
-        this.visualend = this.timeToString(this.commentend);
+        this.visualstart = this._timeToString(this.commentstart);
+        this.visualend = this._timeToString(this.commentend);
         this.changeCommentTime();
         this.$$('#video-content').seekTo(this.commentstart);
       },
@@ -521,8 +525,8 @@
         this.linkingEdit = true;
         this.linkVideoStart = null;
         this.linkVideoEnd = null;
-        this.visualstart = this.timeToString(0);
-        this.visualend = this.timeToString(this.videoduration);
+        this.visualstart = this._timeToString(0);
+        this.visualend = this._timeToString(this.videoduration);
         this.changeLinkVideoTime();
         this.async(function(){
           if (this.$$('#start-play-time')) {
@@ -535,8 +539,8 @@
 
         // this.linkVideoStart = this.videotime;
         // this.linkVideoEnd = this.linkVideoStart + (this.videoduration * 0.05);
-        // this.visualstart = this.timeToString(this.linkVideoStart);
-        // this.visualend = this.timeToString(this.linkVideoEnd);
+        // this.visualstart = this._timeToString(this.linkVideoStart);
+        // this.visualend = this._timeToString(this.linkVideoEnd);
         // this.changeLinkVideoTime();
       },
 
@@ -567,7 +571,7 @@
       },
 
       saveLinking: function() {
-        var obj = {video: this.videoid}
+        var obj = {video: this.video.videoId}
         if (this.linkVideoStart) {
           obj.videostart = this.linkVideoStart
         }
@@ -589,7 +593,7 @@
       },
 
       addSegment: function() {
-        var obj = {video: this.videoid}
+        var obj = {video: this.video.videoId}
         if (this.linkVideoStart) {
           obj.videostart = this.linkVideoStart
         }
@@ -610,8 +614,8 @@
         this.linkVideoEnd = this.videotime;
         this.visualend = this.videotime;
         this.visualstart = this.videotime;
-        this.visualstart = this.timeToString(this.videotime);
-        this.visualend = this.timeToString(this.videotime);
+        this.visualstart = this._timeToString(this.videotime);
+        this.visualend = this._timeToString(this.videotime);
         this.changeLinkVideoTime();
         // this.$$('#start-play-time').setAttribute('style', `left: 0%;`);
         // this.$$('#end-play-time').setAttribute('style', `left: 100%`);

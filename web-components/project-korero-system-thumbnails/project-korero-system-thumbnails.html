@@ -70,7 +70,7 @@
               ></div>
               <div class="video-overlay-time">
                 <template is="dom-if" if="{{item.videostart}}">
-                  [[timeToString(item.videostart)]] - [[timeToString(item.videoend)]]
+                  [[_timeToString(item.videostart)]] - [[_timeToString(item.videoend)]]
                 </template>
                 <template is="dom-if" if="{{!item.videostart}}">
                   General

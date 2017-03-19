@@ -22,7 +22,7 @@
       <div class="flex">
       </div>
       <div class="flex-10" style="margin-top: 20px">
-        <project-korero-system-video ></project-korero-system-video>
+        <project-korero-system-video id="video-block"></project-korero-system-video>
       </div>
       <div class="flex">
       </div>
@@ -39,11 +39,163 @@
         }
       },
 
+      observers: [
+        'newDiscussion(state.newDiscussion)',
+        'newComment(state.newCommentData, state.newComment)',
+        'closeDiscussion(state.closeDiscussion)',
+        'closeComment(state.closeComment)',
+        'openEditActivity(state.readyEditActivity)', // from discussion
+        'openEditCommentActivity(state.readyEditCommentActivityData, state.readyEditCommentActivity)', // from discussion
+        'editActivity(state.editActivityData, state.editActivity)', // from discussion
+        'editCommentActivity(state.editCommentActivityData, state.editCommentActivity)', // from discussion
+
+        'hoverActivity(state.mouseoverThumbnailData, state.mouseoverThumbnail)', // from discussion
+        'preShowActivity(state.preShowThumbnailData, state.preShowThumbnail)', // from discussion
+        'showActivity(state.tapThumbnailData, state.tapThumbnail)', // from discussion
+        'closeShowActivity(state.closeShowActivity)', // unknown
+        'closeShowActivityFromActivity(state.closeShowActivityFromActivity)', // from show-document-block
+        'closeHoverActivity(state.mouseoutThumbnail)', // from discussion
+        'closeEditActivity(state.closeEditActivity)', // from discussion
+        'closeEditCommentActivity(state.closeEditCommentActivity)', // from discussion
+        '_cancelEditActivity(state.cancelEditActivity)', // from edit-document-block
+        '_cancelEditCommentActivity(state.cancelEditCommentActivity)', // from edit-document-comment-block
+        '_saveEditActivity(state.saveEditActivity)', // from edit-document-block
+        '_saveEditCommentActivity(state.saveEditCommentActivity)', // from edit-document-comment-block
+        'showLinking(state.tapVideoData, state.tapVideo)',
+        'startLinking(state.startLinkingData, state.startLinking)',
+        'playSpecific(state.playSpecificData, state.playSpecific)'
+      ],
+
       behaviors: [
         KORERO.UtilsBehavior,
         UniFlow.ActionEmitter,
         UniFlow.StateAware
       ],
+
+      newDiscussion: function() {
+        this.$$('#video-block').newDiscussion();
+      },
+      newComment: function(data) {
+        this.$$('#video-block').newComment(data);
+      },
+      closeDiscussion: function() {
+        this.$$('#video-block').closeDiscussion();
+      },
+      closeComment: function() {
+        this.$$('#video-block').closeComment();
+      },
+
+      openEditActivity: function() {
+        this.viewEditActivity = true
+        this.resetVideoLink()
+      },
+      openEditCommentActivity: function() {
+        this.viewEditCommentActivity = true;
+        this.resetVideoLink()
+      },
+      editActivity: function(data) {
+        this.viewEditActivity = true;
+        this.$$('#edit-document-block').setDocument(data);
+        this.resetVideoLink()
+      },
+      editCommentActivity: function(data) {
+        this.viewEditCommentActivity = true;
+        this.$$('#edit-document-comment-block').setDocument(data);
+        this.resetVideoLink()
+      },
+
+      hoverActivity: function(data) {
+        this.viewHoverActivity = true;
+        setTimeout(function(){
+          this.$$('#hover-document-block').setDocument(data);
+          this.resetVideoLink()
+        }.bind(this), 100);
+      },
+
+      preShowActivity: function(data) {
+        this.viewShowActivity = true;
+        setTimeout(function(){
+          this.$$('#show-document-block').setPlaceholder(data);
+          this.resetVideoLink()
+        }.bind(this), 100)
+      },
+      showActivity: function(data) {
+        this.viewShowActivity = true;
+        setTimeout(function(){
+          this.$$('#show-document-block').setDocument(data);
+          this.resetVideoLink()
+        }.bind(this), 100);
+      },
+
+      closeShowActivity: function() {
+        this.$$('#show-document-block').closeActivity();
+        this.viewShowActivity = false;
+        this.resetVideoLink()
+      },
+      closeShowActivityFromActivity: function() {
+        this.viewShowActivity = false;
+        this.resetVideoLink()
+      },
+      closeHoverActivity: function() {
+        if (this.viewHoverActivity) {
+          this.$$('#hover-document-block').closeHover();
+          this.viewHoverActivity = false;
+
+        }
+        this.$$('#video-block').resetShowLinking()
+        // this.resetVideoLink()
+      },
+      closeEditActivity: function() {
+        if (this.$$('#edit-document-block')) {
+          this.$$('#edit-document-block').cancelActivity();
+          this.resetVideoLink()
+        }
+      },
+      closeEditCommentActivity: function() {
+        if (this.$$('#edit-document-comment-block')) {
+          this.$$('#edit-document-comment-block').cancelActivity();
+          this.resetVideoLink()
+        }
+      },
+      _cancelEditActivity: function() {
+        // this.fire('cancel-edit-activity', {}, {bubbles: false});
+        this.resetVideoLink()
+        this.viewEditActivity = false;
+      },
+      _cancelEditCommentActivity: function(e) {
+        // this.fire('cancel-edit-comment-activity', e.detail, {bubbles: false});
+        this.viewEditCommentActivity = false;
+        this.resetVideoLink()
+
+      },
+      _saveEditActivity: function(e) {
+        // this.fire('save-edit-activity', e.detail);
+        this.viewEditActivity = false;
+        this.resetVideoLink()
+
+      },
+      _saveEditCommentActivity: function(e) {
+        // this.fire('save-edit-comment-activity', e.detail, {bubbles: false});
+        this.viewEditCommentActivity = false;
+        this.resetVideoLink()
+
+      },
+
+      resetVideoLink: function() {
+        this.$$('#video-block').resetLinking()
+      },
+
+      startLinking: function(data) {
+        this.$$('#video-block').startLinking(data);
+      },
+
+      showLinking: function(data) {
+        this.$$('#video-block').showLinking(data.start, data.end, data.tap);
+      },
+
+      playSpecific: function(data) {
+        this.$$('#video-block').playSpecific(data);
+      }
     });
   </script>
 </dom-module>

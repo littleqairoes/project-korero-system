@@ -23,21 +23,21 @@
     </style>
     <paper-material>
       <div class="new-discussion-time">
-        <template is="dom-if" if="{{!state.discussion.videolink}}">
+        <template is="dom-if" if="{{!discussion.videolink}}">
           Global: <iron-icon icon="default:language"></iron-icon>
         </template>
-        <template is="dom-if" if="{{state.discussion.videolink}}">
+        <template is="dom-if" if="{{discussion.videolink}}">
           Specific: <iron-icon icon="default:radio-button-checked"></iron-icon> [[_timeToString(discussion.start)]] - [[_timeToString(discussion.end)]]
         </template>
       </div>
 
       <div class="new-discussion-container">
 
-        <paper-material class$="toolbar [[_hideContainer(state.discussionToolbar)]]" elevation="2"></paper-material>
-        <paper-material class$="toolbar-refer [[_hideContainer(state.referView)]]" elevation="2">
+        <paper-material class$="toolbar [[hideContainer(viewOptions)]]" elevation="2"></paper-material>
+        <paper-material class$="toolbar-refer [[hideContainer(viewRefer)]]" elevation="2">
           <b>Reference this term to:</b><br/>
-          <template is="dom-if" if="{{isKorero(state.ui)}}">
-            <paper-button raised on-tap="_linkvideo">This Lecture Video</paper-button><br/>
+          <template is="dom-if" if="{{isKorero(ui)}}">
+            <paper-button raised on-tap="linkvideo">This Lecture Video</paper-button><br/>
           </template>
           <!--<paper-button raised>Other Course Materials</paper-button><br/>-->
           <paper-input label="Link other PDF materials" accept="application/pdf" id="external" type="file"></paper-input>
@@ -46,7 +46,7 @@
 
         <paper-input label="Thread title here..." id="title"></paper-input>
 
-        <div id="body" on-tap="_commentChange" on-track="_commentChange" on-keydown="_commentChange">
+        <div id="body" on-tap="commentChange" on-track="commentChange" on-keydown="commentChange">
           This is a text
         </div>
 
@@ -60,7 +60,13 @@
         </div>
       </div>
 
-
+      <template is="dom-if" if="{{viewThumbnailBlock}}">
+        <thumbnails-block
+          id="thumbnails-block"
+          on-close-thumbnails-block="_mouseoutNode"
+          >
+        </thumbnails-block>
+      </template>
 
     </paper-material>
   </template>
@@ -70,6 +76,35 @@
       is: 'project-korero-system-new-discussion',
 
       properties: {
+        discussion: {
+          type: Object,
+        },
+        selected: {
+          type: Object
+        },
+        node: {
+          type: Object
+        },
+        viewOptions: {
+          type: Boolean,
+          value: false
+        },
+        viewRefer: {
+          type: Boolean,
+          value: false
+        },
+        videoid: String,
+        ui: String,
+        user: {
+          type: Object
+        },
+        viewThumbnailBlock: {
+          type: Boolean,
+          value: false
+        },
+        task: {
+          type: String
+        },
         _createNode: {
           type: Object
         }
@@ -89,7 +124,7 @@
         var el = this.$$('#body');
 
         var buttons = ['bold', 'italic', 'underline', 'refer-extension'];
-        var referExtension = this._referExtension();
+        var referExtension = this.referExtension();
 
         var options = {
           autoLink: true,
@@ -114,7 +149,56 @@
 
       _editor: null,
 
-      _referExtension: function() {
+      newDiscussion: function() {
+        this.discussion = {
+          title: '',
+          text: '',
+          nodes: {},
+          videolink: false,
+          ui: this.ui
+        };
+        this.$$('#title').value = '';
+        this._editor.setContent('', 0);
+      },
+
+      commentChange: function() {
+        if (this.node) {
+          this.checkNode();
+        }
+        this.selected = this.showSelectionDiv();
+        this.viewOptions = false;
+        this.viewRefer = true;
+        this.openHover();
+      },
+
+      checkNode: function() {
+        if (this.node) {
+          var nodeId = this.node.id;
+          var hasNode = false;
+          for (var i in this.discussion.nodes[nodeId].refers) {
+            if (this.discussion.nodes[nodeId].refers[i]) {
+              hasNode = true;
+              break;
+            }
+          }
+          // console.log(hasNode, this.selected)
+          if (!hasNode && this.selected) {
+            this.selected.range.deleteContents();
+            this.selected.range.insertNode(document.createTextNode(this.node.innerHTML));
+            this.selected = null;
+            this.emitAction({
+              type: KORERO.Actions.CLOSE_EDIT_ACTIVITY
+            })
+            this.node = null;
+          } else {
+            this.emitAction({
+              type: KORERO.Actions.CLOSE_THUMBNAIL
+            })
+          }
+        }
+      },
+
+      referExtension: function() {
         var self = this;
         return MediumEditor.Extension.extend({
           name: 'refer-extension',
@@ -133,56 +217,34 @@
           handleClick: function(event) {
             // console.log(self.state.discusssionSelected);
             // console.log(self.state.discussionSelected.text)
-            self._refer();
+            self.refer();
           }
         })
       },
 
-      _refer: function() {
-        var selected = this.state.discussionSelected;
+      refer: function() {
+        var selected = this.selected
         if (selected && selected.text && selected.text.length > 0) {
           var id = 'discussion-link-' + chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 10});
           var text = selected.text;
           this._editor.pasteHTML('<mark id=' + id + '>' + text + '</mark>&#8203;');
           this.$$('#' + id).classList.add('new-discussion-link');
-
-          this.emitAction({type: KORERO.Actions.SET_REFER_VIEW, referView: true});
-          this.emitAction({type: KORERO.Actions.SET_NEW_DISCUSSION_LINKS, id: id})
+          this.node = this.$$('#' + id);
+          this.viewOptions = false;
+          this.viewRefer = true;
+          // this.emitAction({type: KORERO.Actions.SET_REFER_VIEW, referView: true});
+          // this.emitAction({type: KORERO.Actions.SET_NEW_DISCUSSION_LINKS, id: id})
         }
       },
 
-      _checkNodeForCancel: function() {
-        if (this.createNode) {
-          var data = JSON.parse(this.createNode.getAttribute('data-hover'));
-          if (!data || (data && (!data.length || data.length === 0 ))) {
-            this.selected.range.deleteContents();
-            this.selected.range.insertNode(document.createTextNode(this.createNode.innerHTML));
-            this.selected = null;
-            this.createNode = null;
-          } else {
-            this.exitBottom();
-          }
-        }
+      referMore: function() {
+        this.viewOptions = false;
+        this.viewRefer = true;
+        this.openHover(true);
       },
 
-      newDiscussion: function() {
-        this.$$('#title').value = '';
-        this._editor.setContent('', 0);
-      },
-
-      _commentChange: function() {
-        this.emitAction({
-          type: KORERO.Actions.SET_SELECTION,
-          discussionSelected: this.showSelectionDiv()
-        });
-        this._openHoverOptions();
-      },
-
-      _openHoverOptions: function(flag) {
-        var selected = this.state.discussionSelected;
-
-        if (selected && selected.text && selected.text.length > 0) {
-          this.emitAction({type: KORERO.Actions.CLOSE_BOTTOM});
+      openHover: function(flag) {
+        if (this.selected.text && this.selected.text.length > 0) {
           var elRect = this.$$('.new-discussion-container').getBoundingClientRect();
           var top = (selected.pos.top - elRect.top) + selected.pos.height;
           var left = (selected.pos.left) - elRect.left;
@@ -191,18 +253,19 @@
           }
           this.$$('.toolbar').setAttribute('style', `top: ${top}px; left: ${left}px`);
           this.$$('.toolbar-refer').setAttribute('style', `top: ${top}px; left: ${left}px`);
-          if (flag) this._refer();
+          if (!flag) this.refer();
         } else {
-          this.emitAction({type: KORERO.Actions.CLOSE_DISCUSSION_TOOLBAR});
-          this.emitAction({type: KORERO.Actions.SET_REFER_VIEW, referView: false});
+          this.viewOptions = false;
+          this.viewRefer = false;
         }
-
       },
 
-      _createLink: function() {
-        if (this.state.ui === 'korero') {
+      createLink: function() {
+        if (this.ui === 'korero') {
           KORERO.Elements.Template.$.toast.showMessage('Uploading...');
-          this.emitAction({type: KORERO.Actions.OPEN_VIEW_EDIT_ACTIVITY});
+          this.emitAction({
+            type: KORERO.Actions.READY_EDIT_ACTIVITY
+          })
           var file = this.$$('#external').inputElement.files[0];
 
           var task = firebase.storage().ref('docs/'+ this.state.interfaceId +'/'+file.name).put(file);
@@ -211,93 +274,233 @@
           }, this._catchError.bind(this), function() {
             KORERO.Elements.Template.$.toast.showMessage('Uploading done');
             PDFJS.getDocument(task.snapshot.downloadURL).then(function(pdf) {
-              this.emitAction({type: KORERO.Actions.OPEN_VIEW_EDIT_ACTIVITY, data: {
-                pdf: pdf,
-                file: task.snapshot.downloadURL
-              }}).catch(this._catchError.bind(this));
+
+              this.emitAction({
+                type: KORERO.Actions.EDIT_ACTIVITY,
+                data: {
+                  pdf: pdf,
+                  file: task.snapshot.downloadURL
+                }
+              });
               this.$$('#external').inputElement.value = '';
-              this.emitAction({type: KORERO.Actions.CLOSE_DISCUSSION_TOOLBAR});
-              this.emitAction({type: KORERO.Actions.SET_REFER_VIEW, referView: false});
+              this.viewOptions = false;
+              this.viewRefer = true;
             }.bind(this))
             // console.log();
           })
         } else {
-          this.emitAction({type: KORERO.Actions.CLOSE_DISCUSSION_TOOLBAR});
-          this.emitAction({type: KORERO.Actions.SET_REFER_VIEW, referView: false});
+          this.viewOptions = false;
+          this.viewRefer = false;
+          var nodeId = this.node.id;
+          var referId = null;
+
+          do {
+            referId = chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 10});
+          } while (this.discussion.nodes[nodeId].refers[referId]);
+
+          var task = firebase.storage().ref('docs/'+ this.state.interfaceId +'/'+file.name).put(file);
+          task.on('state_changed', function(snapshot){
+
+          }, this._catchError.bind(this), function() {
+            KORERO.Elements.Template.$.toast.showMessage('Uploading done');
+
+            this.discussion.nodes[nodeId].refers[referId] = {
+              file: task.snapshot.downloadURL,
+              boxes: {
+                root: {
+                  id: 'root',
+                  page: 1
+                }
+              }
+            };
+
+            this.node.classList = ['hover'];
+            this.node.addEventListener('mouseover', this._mouseoverNode.bind(this));
+            // this.node.addEventListener('mouseout', this._mouseoutNode.bind(this));
+            this.node.addEventListener('tap', this._tapNode.bind(this));
+            this.node = null;
+            // console.log();
+          })
         }
       },
 
-      cancel: function() {
-        // this.emitAction({type})
-      },
-
-      _hideContainer: function(state) {
+      hideContainer: function(state) {
         return !state ? 'hidden' : '';
       },
 
-      _linkvideo: function() {
+      linkvideo: function() {
         this.emitAction({
-          type: KORERO.Actions.SET_LINKING,
-          flag: true
-        })
+          type: KORERO.Actions.START_LINKING
+        });
+
+        this.viewOptions = false;
+        this.viewRefer = false;
+
+      },
+
+      cancelEditActivity: function() {
+        this.checkNode();
+      },
+
+      saveEditActivity: function(data) {
+        var nodeId = this.node.id;
+        var referId = null;
+        do {
+          referId = chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 10});
+        } while (this.discussion.nodes[nodeId].refers[referId]);
+        // console.log(data);
+        this.discussion.nodes[nodeId].refers[referId] = data;
 
         this.emitAction({
-          type: KORERO.Actions.SET_LINKING_EDIT,
-          flag: true
+          type: KORERO.Actions.OPEN_THUMBNAIL_BLOCK,
+          data: {node: this.discussion.nodes[nodeId], text: this.node.innerHTML, newDiscussion: true, open: true}
         })
+      },
+
+      saveLinking: function(data) {
+        var nodeId = this.node.id;
+        var referId = null;
+        do {
+          referId = chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 10});
+        } while (this.discussion.nodes[nodeId].refers[referId]);
+        this.discussion.nodes[nodeId].refers[referId] = {
+          boxes: {
+            root: data
+          }
+        };
 
         this.emitAction({
-          type: KORERO.Actions.SET_LINK_TAPPED,
-          flag: false
-        })
-
-        this.emitAction({
-          type: KORERO.Actions.SET_REFER_VIEW,
-          referView: false
+          type: KORERO.Actions.OPEN_THUMBNAIL_BLOCK,
+          data: {node: this.discussion.nodes[nodeId], text: this.node.innerHTML, newDiscussion: true, open: true}
         });
       },
 
-      _saveLinking: function(saveLinking, id) {
-        if (id) return;
-        if (saveLinking) {
-          var nodeId = this.state.currentLink;
-
-          var referId = null;
-          do {
-            referId = chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 10});
-          } while (this.state.newDiscussionObject.links[nodeId].refers[referId]);
-
-          var data = { video: this.state.videoId};
-          if (this.state.linkTime.start) {
-            data.videostart = this.state.linkTime.start
-          }
-
-          if (this.state.linkTime.end) {
-            data.videoend = this.state.linkTime.end;
-            if (!this.state.linkTime.start) {
-              data.videostart = 0;
+      closedThumbnailBlock: function() {
+        if (this.node) {
+          var nodeId = this.node.id;
+          var flag = false;
+          // console.log(this.discussion.nodes[nodeId]);
+          for (var i in this.discussion.nodes[nodeId].refers) {
+            if (this.discussion.nodes[nodeId].refers[i]) {
+              flag = true;
+              break;
             }
           }
-
-          this.emitAction({
-            type: KORERO.Actions.SET_NEW_DISCUSSION_LINK_REFER,
-            nodeId: nodeId,
-            referId: referId,
-            data: {
-              boxes: {
-                root: data
-              }
-            }
-          });
-
-          // emitAction to open thumbnail block
-
-          this.emitAction({
-            type: KORERO.Actions.SET_SAVE_LINKING,
-            flag: false
-          })
+          if (flag) {
+            this.node.classList = ['hover'];
+            this.node.addEventListener('mouseover', this._mouseoverNode.bind(this));
+            // this.node.addEventListener('mouseout', this._mouseoutNode.bind(this));
+            this.node.addEventListener('tap', this._tapNode.bind(this));
+            this.node = null;
+          }
+          // } else {
+          //   // delete(this.discussion.nodes[nodeId]);
+          // }
         }
-      }
+      },
+
+      _mouseoverNode: function(e) {
+        this._mouseoutNode();
+        if (this.ui === 'korero') {
+          var nodeId = e.target.id;
+          var element = e.target;
+          var box = e.target.getBoundingClientRect();
+          // console.log(box);
+          var node = this.discussion.nodes[nodeId];
+          this.viewThumbnailBlock = true;
+          this.async(function(){
+            this.$$('#thumbnails-block').setNode(node, element.innerHTML, false, false);
+            this.$$('#thumbnails-block').setAttribute('style', `left: ${box.left - 200}px; top: ${box.top + 20}px; z-index: 100`);
+          }.bind(this), 100);
+          // this.fire('mouseover-node', {node: node, text: e.target.innerHTML});
+        }
+      },
+      _mouseoutNode: function(e) {
+        if (this.viewThumbnailBlock) {
+          this.$$('#thumbnails-block').setNode();
+        }
+        this.viewThumbnailBlock = false;
+        // this.fire('mouseout-node', {});
+      },
+
+      _tapNode: function(e) {
+        this._mouseoutNode();
+        var nodeId = e.target.id;
+        var node = this.discussion.nodes[nodeId];
+        if (this.isKorero(this.ui)) {
+          this.closedThumbnailBlock();
+
+          this.emitAction({
+            type: KORERO.Action.CLOSE_EDIT_ACTIVITY
+          });
+          this.emitAction({
+            type: KORERO.Action.TAP_NODE,
+            data: {node: node, text: e.target.innerHTML, open: true}
+          });
+        } else {
+          for (var i in node.refers) {
+            if (node.refers[i]) {
+              window.open(node.refers[i].file);
+              break;
+            }
+          }
+        }
+      },
+
+      changeDiscussionTime: function(data) {
+        console.log(data);
+        if (data.discussionstart != undefined || data.discussionstart != null) {
+          this.set('discussion.videolink', true);
+          // this.discussion.videolink = true
+        } else {
+          this.set('discussion.videolink', false);
+          // this.discussion.videolink = false
+        }
+        this.set('discussion.start', data.discussionstart);
+        this.set('discussion.end', data.discussionend);
+        // this.discussion.start = data.discussionstart;
+        // this.discussion.end = data.discussionend;
+        console.log(this.discussion)
+      },
+
+      cancel: function() {
+        this.viewOptions = false;
+        this.viewRefer = false;
+        this.emitAction({
+          type: KORERO.Actions.CANCEL_DISCUSSION
+        })
+      },
+
+      post: function() {
+        this.closedThumbnailBlock();
+        // console.log(this.$$('#text').innerHTML)
+        this.set('discussion.title', this.$$('#title').value);
+        console.log(this._editor.getContent(0))
+        this.set('discussion.text', this._editor.getContent(0));
+        // this.set('discussion.text', this.$$('#text').innerHTML);
+        this.set('discussion.user', this.user.uid);
+        this.set('discussion.task', this.task);
+        this.set('discussion.createdOn', this.getUTC());
+
+        if (this.user.displayName) {
+          this.set('discussion.participantNumber', this.user.displayName);
+        }
+        var ref = this.discussion.videolink ? this.interfacePath.discussions + '/' + this.videoid + '/specifics/specifics-' + chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 20}) :
+          this.interfacePath.discussions + '/' + this.videoid + "/discussion/discussion-" + this.ui + "-" + chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 20})
+
+        firebase.database().ref(ref).set(this.discussion).then(function(){
+          KORERO.Elements.Template.$.toast.showMessage('Saved...');
+          this.viewOptions = false;
+          this.viewRefer = false;
+          this.emitAction({
+            type: KORERO.Actions.SAVE_DISCUSSION
+          })
+        }.bind(this)).catch(this._catchError.bind(this));
+      },
+      _removeThumbnailBlock: function() {
+
+      },
+
     });
   </script>
 </dom-module>

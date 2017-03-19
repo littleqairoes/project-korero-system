@@ -1,6 +1,7 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/uniflow-polymer/action-dispatcher.html">
 <link rel="import" href="../../bower_components/uniflow-polymer/action-emitter.html">
+<link rel="import" href="../../web-components/project-korero-system-discussion/project-korero-system-discussion-scripts.html">
 
 <dom-module id="project-korero-system-action-dispatcher">
   <script>
@@ -20,132 +21,91 @@
       //   });
       // },
 
+      eventFire: function() {
+        return chance.string({pool: 'abcdefghijklmnopqrstuvwxyz', length: 10})
+      },
+
       [KORERO.Actions.SET_INTERFACE_ID](details) {
         this.set('state.interfaceId', details.id);
-      },
-
-      [KORERO.Actions.OPEN_CREATE_DISCUSSION](details) {
-        this.set('state.createDiscussion', true);
-        this.set('state.discussionId', null);
-        this.set('state.newDiscussionObject.title', '');
-        this.set('state.newDiscussionObject.text', '');
-        this.set('state.newDiscussionObject.nodes', {});
-        this.set('state.newDiscussionObject.videolink', false);
-      },
-
-      [KORERO.Actions.CLOSE_CREATE_DISCUSSION](details) {
-        this.set('state.createDiscussion', false);
-        this.set('state.discussionToolbar', false);
-      },
-
-      [KORERO.Actions.CLOSE_DISCUSSION_TOOLBAR](details) {
-        this.set('state.discussionToolbar', false);
-      },
-
-      [KORERO.Actions.SET_REFER_VIEW](details) {
-        this.set('state.referView', details.referView);
-      },
-
-      [KORERO.Actions.SET_SELECTION](details) {
-        this.set('state.discussionSelected', details.discussionSelected)
-        if (details.discussionSelected && details.discussionSelected.text && details.discussionSelected.text.length > 0) {
-          this.set('state.discussionToolbar', true);
-        } else {
-          this.set('state.discussionToolbar', false)
-        }
-      },
-
-      [KORERO.Actions.SET_NEW_DISCUSSION_LINKS](details) {
-        this.set('state.newDiscussionObject.links.' + details.id, {
-          refers: {}
-        });
-        this.set('state.newDiscussionObject.currentLink', details.id)
-      },
-
-      [KORERO.Actions.OPEN_VIEW_EDIT_ACTIVITY](details) {
-        this.set('state.viewEditActivity', true);
-        if (details.data) {
-
-        }
-      },
-
-      [KORERO.Actions.CLOSE_VIEW_EDIT_ACTIVITY](details) {
-        this.set('state.viewEditActivity', false);
-      },
-
-      [KORERO.Actions.CLOSE_BOTTOM](details) {
-        this.set('state.openBottom', null);
-      },
-
-
-
-      // DISCUSSION SET
-      [KORERO.Actions.SET_DISCUSSION_TIME](details) {
-        this.set('state.discussionTime.start', details.time);
-        this.set('state.discussionTime.end', details.time);
-      },
-
-      // - used in project-korero-system-video
-      //   - to set discussion link flag to true when _newDiscussion is called (after OPEN_CREATE_DISCUSSION is called)
-      //
-      [KORERO.Actions.SET_DISCUSSION_LINK_FLAG](details) {
-        this.set('state.discussionLink', details.flag);
-      },
-
-      // COMMENT SET
-      [KORERO.Actions.SET_COMMENT_TIME](details) {
-        this.set('state.commentTime.start', details.time);
-        this.set('state.commentTime.end', details.time);
-      },
-
-      [KORERO.Actions.SET_COMMENT_LINK_FLAG](details) {
-        this.set('state.commentLink', details.flag)
-      },
-
-      // LINKING
-      [KORERO.Actions.SET_LINK_TIME](details) {
-        this.set('state.linkTime.start', details.time);
-        this.set('state.linkTime.end', details.time);
-      },
-
-      [KORERO.Actions.SET_LINKING](details) {
-        this.set('state.linking', details.flag);
-      },
-
-      [KORERO.Actions.SET_LINKING_EDIT](details) {
-        this.set('state.linkingEdit', details.flag);
-      },
-
-      [KORERO.Actions.SET_LINK_TAPPED](details) {
-        this.set('state.linkTapped', details.flag);
-      },
-
-      [KORERO.Actions.CANCEL_LINKING](details) {
-        this.set('state.linking', false);
-        this.set('state.linkingEdit', false);
-        this.set('state.linkTapped', false);
-        // Call cancel-linking
       },
 
       [KORERO.Actions.SET_VIDEO](details) {
         this.set('state.videoId', details.videoId)
       },
 
-      [KORERO.Actions.SET_NEW_LINK_TIME](details) {
-        this.set('state.newLinkTime.start', details.start);
-        this.set('state.newLinkTime.end', details.end);
+      // events
+      // to video-block
+      [KORERO.Actions.START_LINKING](details) {
+        this.set('state.startLinking', this.eventFire());
+        this.set('state.startLinkingData', details.data || {});
       },
 
-      [KORERO.Actions.SET_DISCUSSION_ID](details) {
-        this.set('state.discussionId', details.discussionId)
+      // from video-block
+      [KORERO.Actions.CHANGE_DISCUSSION_TIME](details) {
+        this.set('state.changeDiscussionTime', this.eventFire());
+        this.set('state.changeDiscussionTimeData', details.data || {});
       },
 
-      [KORERO.Actions.SET_SAVE_LINKING](details) {
-        this.set('state.saveLinking', details.flag)
+      // from video-block
+      [KORERO.Actions.CHANGE_COMMENT_TIME](details) {
+        this.set('state.changeCommentTime', this.eventFire());
+        this.set('state.changeCommentTimeData', details.data || {});
       },
 
-      [KORERO.Actions.SET_NEW_DISCUSSION_LINK_REFER](details) {
-        this.set('state.newDiscussionObject.links.' + details.nodeId + '.refers.' + details.referId, details.data);
+      // from video-block
+      [KORERO.Actions.CHANGE_COMMENT_TIME](details) {
+        this.set('state.changeCommentTime', this.eventFire());
+        this.set('state.changeCommentTimeData', details.data || {});
+      },
+
+      // from video-block
+      [KORERO.Actions.SAVE_LINKING](details) {
+        this.set('state.saveLinking', this.eventFire());
+        this.set('state.saveLinkingData', details.data || {});
+      },
+
+      // from video-block
+      [KORERO.Actions.CANCEL_LINKING](details) {
+        this.set('state.cancelLinking', this.eventFire());
+      },
+
+      [KORERO.Actions.CLOSE_EDIT_ACTIVITY](details) {
+        this.set('state.closeEditActivity', this.eventFire());
+      },
+
+      [KORERO.Actions.CLOSE_THUMBNAIL](details) {
+        this.set('state.closeThumbnail', this.eventFire());
+      },
+
+      [KORERO.Actions.READY_EDIT_ACTIVITY](detials) {
+        this.set('state.readyEditActivity', this.eventFire());
+      },
+
+      [KORERO.Actions.EDIT_ACTIVITY](detials) {
+        this.set('state.editActivity', this.eventFire());
+        this.set('state.editActivityData', this.eventFire());
+      },
+
+      [KORERO.Actions.OPEN_THUMBNAIL_BLOCK](detials) {
+        this.set('state.openThumbnailBlock', this.eventFire());
+        this.set('state.openThumbnailBlockData', details.data)
+      },
+
+      [KORERO.Actions.TAP_NODE](detials) {
+        this.set('state.tapNode', this.eventFire());
+        this.set('state.tapNodeData', details.data)
+      },
+
+      [KORERO.Actions.SAVE_DISCUSSION](detials) {
+        this.set('state.saveDiscussion', this.eventFire());
+      },
+
+      [KORERO.Actions.NEW_DISCUSSION](details) {
+        this.set('state.newDiscussion', this.eventFire());
+      },
+
+      [KORERO.Actions.CLOSE_DISCUSSION](details) {
+        this.set('state.closeDiscussion', this.eventFire());
       }
 
     });

@@ -12,6 +12,8 @@
 <link rel="import" href="../../web-components/project-korero-system-new-discussion/project-korero-system-new-discussion.html">
 <link rel="import" href="../../web-components/project-korero-system-icons/project-korero-system-icons.html">
 <link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-utils-behavior.html">
+<link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-user-behavior.html">
+<link rel="import" href="../../web-components/project-korero-system-thumbnails/project-korero-system-thumbnails.html">
 
 <link rel="import" href="project-korero-system-discussion-scripts.html">
 
@@ -29,17 +31,23 @@
 
 
     <paper-material class="create-discussion-container" id="create-discussion-container">
-      <template is="dom-if" if="[[state.createDiscussion]]">
-        <project-korero-system-new-discussion id="new-discussion-block"></project-korero-system-new-discussion>
+      <template is="dom-if" if="[[newDiscussion]]">
+        <project-korero-system-new-discussion id="new-discussion-block" user="[[user]]"></project-korero-system-new-discussion>
       </template>
     </paper-material>
 
     <!-- add thumbnails -->
+    <template is="dom-if" if="{{viewThumbnailsBlock}}">
+      <project-korero-system-thumbnails
+        id="thumbnails-block">
+      </project-korero-system-thumbnails>
+
+    </template>
 
     <paper-fab
       id="create-discussion-button"
       icon="default:chat"
-      on-tap="_openCreateDiscussion">
+      on-tap="openCreateDiscussion">
     </paper-fab>
   </template>
 
@@ -48,22 +56,132 @@
       is: 'project-korero-system-discussion',
 
       properties: {
-        _createNode: {
-          type: Object
+        newDiscussion: {
+          type: Boolean,
+          value: false
+        },
+        viewThumbnailsBlock: {
+          type: Boolean
         }
       },
 
       behaviors: [
         KORERO.UtilsBehavior,
+        KORERO.UserBehavior,
         UniFlow.ActionEmitter,
         UniFlow.StateAware
       ],
 
-      _openCreateDiscussion: function() {
-        this.emitAction({type: KORERO.Actions.OPEN_CREATE_DISCUSSION});
+      observers: [
+        'saveLinking(state.saveLinkingData, state.saveLinking)',
+        'cancelLinking(state.cancelLinking)',
+        'changeDiscussionTime(state.changeDiscussionTimeData, state.changeDiscussionTime)',
+        'changeCommentTime(state.changeCommentTimeData, state.changeCommentTime)',
+        '_closeThumbnailBlock(state.closeThumbnail)',
+        '_openThumbnailBlock(state.openThumbnailBlockData, state.openThumbnailBlock)',
+        '_saveDiscussion(state.saveDiscussion)'
+      ],
+
+      openCreateDiscussion: function() {
+        this.newDiscussion = true;
         Polymer.RenderStatus.afterNextRender(this, function() {
           this.$$('#new-discussion-block').newDiscussion();
+          this.emitAction({
+            type: KORERO.Actions.NEW_DISCUSSION
+          })
         }.bind(this))
+      },
+
+      saveLinking: function(data) {
+        if (data) {
+          if (data.discussionid) {
+            this.$$('#discussion-'+data.discussionid).saveLinking(data);
+          } else if (this.newDiscussion) {
+            this.$$('#new-discussion-block').saveLinking(data);
+          }
+        }
+      },
+
+      cancelLinking: function() {
+        if (this.newDiscussion) {
+          this.$$('#new-discussion-block').cancelLinking();
+        }
+      },
+
+      changeDiscussionTime: function(data) {
+        if (this.newDiscussion) {
+          this.$$('#new-discussion-block').changeDiscussionTime(data);
+        }
+      },
+
+      changeCommentTime: function(data) {
+        if (data.discussionid) {
+          this.$$('#discussion-'+data.discussionid).changeCommentTime(data);
+        }
+      },
+
+      _openThumbnailBlock: function(data) {
+        this.viewThumbnailBlock = true;
+        this.permanentThumbnailBlock = data.open;
+        Polymer.RenderStatus.AfterNextRender(this, function(){
+          this.$$('#thumbnails-block').setNode(data.node, data.text, data.newDiscussion, data.open, data.discussionid, data.open);
+        });
+      },
+
+      _closeThumbnailBlock: function() {
+        this.$$('#thumbnails-block').setPrevious();
+      },
+
+      _permanentCloseThumbnailBlock: function(data) {
+        if (this.viewThumbnailBlock) {
+          this.$$('#thumbnails-block').setNode();
+          this.viewThumbnailBlock = false;
+        }
+        if (this.viewNewDiscussionBlock) {
+          this.$$('#new-discussion-block').closedThumbnailBlock();
+        }
+
+        if (data.discussionid) {
+          this.$$('#discussion-'+data.discussionid).closedThumbnailBlock();
+        }
+
+      },
+      _removeThumbnailBlock: function() {
+        this.viewThumbnailBlock = false;
+      },
+      _openEditorOptions: function(e) {
+        if (this.viewNewDiscussionBlock) {
+          this.$$('#new-discussion-block').referMore();
+        } else if (e.detail.discussionid) {
+          this.$$('#discussion-'+e.detail.discussionid).referMore();
+        }
+      },
+
+      cancelEditActivity: function() {
+        this.$$('#new-discussion-block').cancelEditActivity();
+      },
+      saveEditActivity: function(data) {
+        this.$$('#new-discussion-block').saveEditActivity(data);
+      },
+
+      cancelEditCommentActivity: function(data) {
+        this.$$('#discussion-'+data.discussionid).cancelEditActivity();
+      },
+      saveEditCommentActivity: function(data) {
+        this.$$('#discussion-'+data.discussionid).saveEditActivity(data);
+      },
+
+
+
+      _cancelDiscussion: function() {
+        this.viewNewDiscussionBlock = false;
+        this._permanentCloseThumbnailBlock();
+        this.emitAction({
+          type: KORERO.Actions.CLOSE_DISCUSSION
+        });
+      },
+      _saveDiscussion: function() {
+        this._cancelDiscussion();
       },
 
       _hideContainer: function(state) {

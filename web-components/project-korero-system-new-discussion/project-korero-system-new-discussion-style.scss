@@ -22,6 +22,22 @@
   .new-link {
     background-color: yellow;
   }
+
+  .hover {
+    text-decoration: underline;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .hover:hover {
+    background-color: yellow;
+  }
+}
+
+#thumbnails-block {
+  position: fixed;
+  width: 400px;
+  background-color: #FFF;
 }
 
 .toolbar {

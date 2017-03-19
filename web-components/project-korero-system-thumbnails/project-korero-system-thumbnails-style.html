@@ -1,0 +1,50 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<dom-module id="project-korero-system-thumbnails-style">
+<template>
+<style>
+:host #thumbnails-block-content {
+  padding: 10px;
+  position: relative; }
+
+:host .container {
+  overflow-x: auto;
+  width: 100%; }
+
+:host img {
+  height: 100px;
+  border: 1px solid black;
+  cursor: pointer; }
+
+:host img:hover {
+  border: 1px solid red; }
+
+:host .quote {
+  font-size: 0.8em; }
+
+:host .paper-mat {
+  position: relative;
+  margin-right: 10px; }
+
+:host .video-overlay {
+  width: 160px;
+  height: 90px;
+  position: absolute;
+  cursor: pointer;
+  border: 1px solid black;
+  top: 18px; }
+
+:host .video-overlay:hover {
+  border: 1px solid red; }
+
+:host .video-overlay-time, .pdf-description {
+  text-align: center;
+  font-size: 0.8em; }
+
+:host #exit-thumbnail {
+  position: absolute;
+  top: 5px;
+  right: 5px; }
+
+</style>
+</template>
+</dom-module>

@@ -5,6 +5,7 @@
 <link rel="import" href="../../bower_components/uniflow-polymer/state-aware.html">
 <link rel="import" href="../../web-components/project-korero-system-behaviors/project-korero-system-utils-behavior.html">
 <link rel="import" href="../../web-components/project-korero-system-video/project-korero-system-video.html">
+<link rel="import" href="../../web-components/project-korero-system-icons/project-korero-system-icons.html">
 
 
 <!-- Style dependency -->
@@ -18,8 +19,81 @@
       }
     </style>
 
-    <div class="horizontal layout center">
+    <div id="thumbnails-block-content">
+      <paper-icon-button id="exit-thumbnail" icon="default:close" on-tap="_closeThumbnailsBlock"></paper-icon-button>
 
+      <div class="quote">
+        Referential term: "{{text}}"
+      </div>
+
+      <div class="horizontal layout container">
+        <template is="dom-repeat" items="{{boxes}}">
+          <paper-material class="paper-mat">
+            <template is="dom-if" if="{{!item.video}}">
+              <div class="pdf-description">
+                PDF
+              </div>
+              <img
+                class="thumbnail"
+                src="[[item.thumbnail]]"
+                data-index$="[[item.index]]"
+                on-mouseover="_mouseoverThumbnail"
+                on-mouseout="_mouseoutThumbnail"
+                on-tap="_tapThumbnail"
+              >
+              <div class="pdf-description">
+                <template is="dom-if" if="{{item.top}}">
+                  Page [[item.page]]
+                </template>
+                <template is="dom-if" if="{{!item.top}}">
+                  General
+                </template>
+              </div>
+            </template>
+            <template is="dom-if" if="{{item.video}}">
+              <div class="pdf-description">
+                Main Video
+              </div>
+              <google-youtube
+                width="160px"
+                height="90px"
+                video-id="[[item.video]]"
+                chromeless
+              >
+              </google-youtube>
+              <div
+                class="video-overlay"
+                data-index$="[[item.index]]"
+                on-mouseover="_mouseoverThumbnail"
+                on-mouseout="_mouseoutThumbnail"
+                on-tap="_tapThumbnail"
+              ></div>
+              <div class="video-overlay-time">
+                <template is="dom-if" if="{{item.videostart}}">
+                  [[timeToString(item.videostart)]] - [[timeToString(item.videoend)]]
+                </template>
+                <template is="dom-if" if="{{!item.videostart}}">
+                  General
+                </template>
+              </div>
+            </template>
+          </paper-material>
+        </template>
+      </div>
+
+
+      <template is="dom-if" if="{{hover}}">
+        <div class="horizontal layout">
+          <paper-button class="flex" on-tap="_closeThumbnailsBlock">
+            Exit
+          </paper-button>
+          <template is="dom-if" if="{{editor}}">
+            <paper-button class="flex" on-tap="_openEditorOptions">
+              Refer more...
+            </paper-button>
+          </template>
+        </div>
+      </template>
     </div>
   </template>
 
@@ -28,6 +102,36 @@
       is: 'project-korero-system-thumbnails',
 
       properties: {
+        boxes: {
+          type: Object,
+        },
+        editor: {
+          type: Boolean,
+          value: false
+        },
+        previousboxes: {
+          type: Object
+        },
+        permanent: {
+          type: Boolean
+        },
+        text: {
+          type: String
+        },
+        previoustext: {
+          type: String
+        },
+        previousNewDiscussion: {
+          type: Boolean
+        },
+        hover: {
+          type: Boolean
+        },
+        previousnode: {
+          type: Object
+        },
+        discussionid: String,
+        prevdiscid: String,
       },
 
       behaviors: [
@@ -35,6 +139,180 @@
         UniFlow.ActionEmitter,
         UniFlow.StateAware
       ],
+
+      // called by closed thumbnail block
+      setPrevious: function() {
+        if (this.permanent) {
+          this.hover = this.permanent;
+          this.text = this.previoustext
+          this.editor = this.previousNewDiscussion
+          this.discussionid = this.prevdiscid
+          this.boxes = [];
+          for (var i in this.previousboxes) {
+            this.push('boxes', this.previousboxes[i]);
+          }
+
+          this.node = {};
+          for (var k in this.previousnode.refers) {
+            this.node = {
+              refers: {}
+            }
+            this.node.refers[k] = {
+              boxes: {},
+              file: this.previousnode.refers[k].file
+            };
+            for (var l in this.previousnode.refers[k].boxes) {
+              this.node.refers[k].boxes[l] = this.previousnode.refers[k].boxes[l]
+            }
+          }
+        } else {
+          this.setNode();
+        }
+      },
+
+      //
+
+      setNode: function(node, text, newDiscussion, p, discussionid, open) {
+        this.text = text;
+        this.boxes = [];
+        this.hover = p;
+        this.editor = newDiscussion;
+        this.node = node;
+        this.discussionid = discussionid;
+        this.permanentOpen = open;
+        // console.log(node);
+
+        if (node) {
+          for (var i in node.refers) {
+            for (var j in node.refers[i].boxes) {
+              var obj = {
+                referId: i,
+                boxId: j,
+                index: this.boxes.length,
+                thumbnail: node.refers[i].boxes[j].thumbnail,
+                file: node.refers[i].file,
+                top: node.refers[i].boxes[j].top,
+                left: node.refers[i].boxes[j].left,
+                width: node.refers[i].boxes[j].width,
+                height: node.refers[i].boxes[j].height,
+                video: node.refers[i].boxes[j].video,
+                videostart: node.refers[i].boxes[j].videostart,
+                videoend: node.refers[i].boxes[j].videoend,
+                page: node.refers[i].boxes[j].page
+              };
+              // console.log(obj)
+              this.push('boxes', obj);
+            }
+          }
+          if (p) {
+            this.previousboxes = [];
+            this.previoustext = text;
+            this.previousNewDiscussion = newDiscussion;
+            this.permanent = p;
+            this.prevdiscid = discussionid
+            for (var k in this.boxes) {
+              this.push('previousboxes', {
+                referId: this.boxes[k].referId,
+                boxId: this.boxes[k].boxId,
+                thumbnail: this.boxes[k].thumbnail,
+                file: this.boxes[k].file,
+                top: this.boxes[k].top,
+                left: this.boxes[k].left,
+                width: this.boxes[k].width,
+                height: this.boxes[k].height,
+                index: k,
+                video: this.boxes[k].video,
+                videostart: this.boxes[k].videostart,
+                videoend: this.boxes[k].videoend,
+                page: this.boxes[k].page
+              });
+            }
+            this.previousnode = {};
+            for (var k in node.refers) {
+              this.previousnode = {
+                refers: {}
+              }
+              this.previousnode.refers[k] = {
+                boxes: {},
+                file: node.refers[k].file
+              };
+              for (var l in node.refers[k].boxes) {
+                this.previousnode.refers[k].boxes[l] = node.refers[k].boxes[l]
+              }
+            }
+          }
+        } else {
+          this.permanent = false;
+          this.emitAction({
+            type: KORERO.Actions.REMOVE_THUMBNAILS_BLOCK
+          })
+        }
+      },
+
+      _mouseoverThumbnail: function(e) {
+        var el = e.target;
+        // console.log(el)
+        //console.log(, e.target.getAttribute('data-index'), this.boxes)
+        if (this.boxes[el.getAttribute('data-index')].video) {
+          this.emitAction({
+            type: KORERO.Actions.MOUSEOVER_VIDEO,
+            data: this.boxes[e.target.getAttribute('data-index')]
+          });
+
+
+        } else {
+          this.emitAction({
+            type: KORERO.Actions.MOUSEOVER_THUMBNAIL,
+            data: this.boxes[e.target.getAttribute('data-index')]
+          });
+        }
+
+      },
+      _mouseoutThumbnail: function(e) {
+        this.emitAction({
+          type: KORERO.Actions.MOUSEOUT_THUMBNAIL
+        })
+      },
+
+      _tapThumbnail: function(e) {
+        var el = e.target;
+        //console.log(, e.target.getAttribute('data-index'), this.boxes)
+        if (this.boxes[el.getAttribute('data-index')].video) {
+          // el.pause();
+          this.emitAction({
+            type: KORERO.Actions.TAP_VIDEO,
+            data: this.boxes[e.target.getAttribute('data-index')]
+          })
+        } else {
+          this.emitAction({
+            type: KORERO.Actions.PRE_SHOW_THUMBNAIL,
+            data: this.boxes[e.target.getAttribute('data-index')]
+          });
+          var node = this.node;
+          var referId = this.boxes[el.getAttribute('data-index')].referId;
+          PDFJS.getDocument(this.boxes[el.getAttribute('data-index')].file).then(function(pdf){
+            this.emitAction({
+              type: KORERO.Actions.TAP_THUMBNAIL,
+              data: {pdf: pdf, boxes: node.refers[referId].boxes}
+            });
+          }.bind(this)).catch(this._catchError.bind(this));
+        }
+      },
+      _closeThumbnailsBlock: function(e) {
+        this.permanent = false;
+        this.permanentOpen = false;
+        this.emitAction({
+          type: KORERO.Actions.CLOSE_THUMBNAILS_BLOCK,
+          data: {discussionid: this.discussionid}
+        });
+        this.fire('close-thumbnails-block', {discussionid: this.discussionid}, {bubbles: false});
+      },
+      _openEditorOptions: function() {
+        this.emitAction({
+          type: KORERO.Actions.OPEN_EDITOR_OPTIONS,
+          data: {discussionid: this.discussionid}
+        });
+      }
     });
   </script>
 </dom-module>

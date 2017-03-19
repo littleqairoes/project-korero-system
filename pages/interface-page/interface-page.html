@@ -30,7 +30,7 @@
 
       <template is="dom-if" if="showDiscussion">
         <template is="dom-if" if="[[state.videoId]]">
-          <project-korero-system-discussion class="flex"></project-korero-system-discussion>
+          <project-korero-system-discussion class="flex" user="[[user]]"></project-korero-system-discussion>
         </template>
         <!--<div class="flex">
 
@@ -70,73 +70,7 @@
       },
 
       ready: function() {
-        this.set('state', {
-          state: 'normal',
-
-          disucsionId: null,
-          showThumbnails: false,
-
-          discussionToolbar: false,
-          referView: false,
-
-          // Discussion
-          createDiscussion: false,
-          newDiscussionObject: {
-            title: '',
-            text: '',
-            links: {},
-            currentLink: null,
-            videolink: false
-          },
-          ui: 'korero',
-          interfaceId: null,
-          videoId: null,
-
-          // linking states
-          linking: false,
-          linkingEdit: false,
-          linkTapped: false,
-          linkTime: {
-            start: null,
-            end: null
-          },
-          newLinkTime: {
-            start: null,
-            end: null
-          },
-          saveLinking: false,
-
-          // show linking states
-          showLinkingFlag: false,
-          showLinkingTime: {
-            start: null,
-            end: null
-          },
-
-          // discussion states
-          discussionLink: false,
-          discussionTime: {
-            start: null,
-            end: null
-          },
-
-          // comment states
-          commentLink: false,
-          commentTime: {
-            start: null,
-            end: null
-          },
-
-          // play specific states
-          playspecific: false,
-          playTime: {
-            start: null,
-            end: null
-          },
-
-
-          // interfaceId: this.params.id
-        });
+        this.set('state', {});
       }
     });
   </script>

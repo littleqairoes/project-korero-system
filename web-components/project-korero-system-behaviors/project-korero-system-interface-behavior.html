@@ -13,7 +13,7 @@
           notify: true,
           // value: function() { return null; },
         },
-        
+
         interfacePath: {
           type: Object,
           readOnly: true,
@@ -24,9 +24,9 @@
           readOnly: true,
           value: function() { return this._interfaceGroup; }
         },
-        
+
       },
-      
+
       get _interfaceGroup() {
         return 'interfaceGroup';
       },
@@ -34,7 +34,8 @@
       get _interfacePath() {
         // var roles = this._version + '/' + this._interfaceGroup + '/roles';
         return {
-          videos: this._version + '/' + this._interfaceGroup + '/videos',                    
+          videos: this._version + '/' + this._interfaceGroup + '/videos',
+          discussions: this._version + '/' + this._interfaceGroup + '/discussions'
         };
       },
     };
